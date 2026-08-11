@@ -1,0 +1,121 @@
+{
+    "info": {
+        "name": "MEDISTOCK API Collection",
+        "description": "Complete API collection for MEDISTOCK - Pharmacy Inventory and Medicine Stock Management System",
+        "version": "1.0.0",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+        { "key": "adminToken", "value": "", "type": "string" },
+        { "key": "staffToken", "value": "", "type": "string" }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login as Admin",
+                    "event": [{
+                        "listen": "test",
+                        "script": {
+                            "exec": ["if (pm.response.code === 200) { const res = pm.response.json(); if (res.data && res.data.token) { pm.collectionVariables.set('adminToken', res.data.token); pm.test('Login successful', () => pm.expect(res.success).to.be.true); } }"]
+                        }
+                    }],
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/login",
+                        "header": [{ "key": "Content-Type", "value": "application/json" }],
+                        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@medistock.com\",\n  \"password\": \"Admin@123\"\n}" }
+                    }
+                },
+                {
+                    "name": "Login as Staff",
+                    "event": [{
+                        "listen": "test",
+                        "script": {
+                            "exec": ["if (pm.response.code === 200) { const res = pm.response.json(); if (res.data && res.data.token) { pm.collectionVariables.set('staffToken', res.data.token); } }"]
+                        }
+                    }],
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/login",
+                        "header": [{ "key": "Content-Type", "value": "application/json" }],
+                        "body": { "mode": "raw", "raw": "{\n  \"email\": \"staff@medistock.com\",\n  \"password\": \"Staff@123\"\n}" }
+                    }
+                },
+                {
+                    "name": "Login - Invalid Credentials",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/login",
+                        "header": [{ "key": "Content-Type", "value": "application/json" }],
+                        "body": { "mode": "raw", "raw": "{\n  \"email\": \"wrong@test.com\",\n  \"password\": \"wrongpassword\"\n}" }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Dashboard",
+            "item": [
+                { "name": "Get Dashboard Summary", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/summary", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Get Low Stock Medicines", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/low-stock", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Get Expiring Medicines", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/expiring", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Get Recent Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/recent-orders", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } }
+            ]
+        },
+        {
+            "name": "Categories",
+            "item": [
+                { "name": "Get All Categories", "request": { "method": "GET", "url": "{{baseUrl}}/api/categories", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Get Active Categories", "request": { "method": "GET", "url": "{{baseUrl}}/api/categories/active", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Create Category", "request": { "method": "POST", "url": "{{baseUrl}}/api/categories", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Category\",\n  \"description\": \"A test category\"\n}" } } },
+                { "name": "Update Category", "request": { "method": "PUT", "url": "{{baseUrl}}/api/categories/1", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Pain Relief Updated\",\n  \"description\": \"Updated description\"\n}" } } },
+                { "name": "Toggle Category Status", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/categories/1/status", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } }
+            ]
+        },
+        {
+            "name": "Medicines",
+            "item": [
+                { "name": "Get All Medicines", "request": { "method": "GET", "url": "{{baseUrl}}/api/medicines", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Search Medicines", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/medicines?keyword=paracetamol", "query": [{ "key": "keyword", "value": "paracetamol" }] }, "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Filter by Category", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/medicines?categoryId=1", "query": [{ "key": "categoryId", "value": "1" }] }, "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Get Medicine by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/medicines/1", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Get Low Stock Medicines", "request": { "method": "GET", "url": "{{baseUrl}}/api/medicines/low-stock", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Get Expiring Soon Medicines", "request": { "method": "GET", "url": "{{baseUrl}}/api/medicines/expiring", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Get Expired Medicines", "request": { "method": "GET", "url": "{{baseUrl}}/api/medicines/expired", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Create Medicine", "request": { "method": "POST", "url": "{{baseUrl}}/api/medicines", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"medicineName\": \"Aspirin 75mg\",\n  \"genericName\": \"Acetylsalicylic Acid\",\n  \"categoryId\": 1,\n  \"manufacturer\": \"Bayer\",\n  \"batchNumber\": \"BY-2024-001\",\n  \"price\": 15.00,\n  \"quantity\": 200,\n  \"minimumStockLevel\": 30,\n  \"expiryDate\": \"2026-12-31\",\n  \"prescriptionRequired\": false,\n  \"description\": \"Low dose aspirin for cardiovascular protection\"\n}" } } },
+                { "name": "Toggle Medicine Status", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/medicines/1/status", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } }
+            ]
+        },
+        {
+            "name": "Inventory",
+            "item": [
+                { "name": "Get All Inventory", "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Stock In", "request": { "method": "POST", "url": "{{baseUrl}}/api/inventory/1/stock-in", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"transactionType\": \"STOCK_IN\",\n  \"quantity\": 50,\n  \"reason\": \"Regular restock from supplier\"\n}" } } },
+                { "name": "Stock Out", "request": { "method": "POST", "url": "{{baseUrl}}/api/inventory/1/stock-out", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"transactionType\": \"STOCK_OUT\",\n  \"quantity\": 10,\n  \"reason\": \"Dispensed to patient\"\n}" } } },
+                { "name": "Stock Out - Insufficient (Error Test)", "request": { "method": "POST", "url": "{{baseUrl}}/api/inventory/1/stock-out", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"transactionType\": \"STOCK_OUT\",\n  \"quantity\": 99999,\n  \"reason\": \"Testing insufficient stock error\"\n}" } } },
+                { "name": "Get Stock History", "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory/1/history", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } }
+            ]
+        },
+        {
+            "name": "Orders",
+            "item": [
+                { "name": "Get All Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Create Order", "request": { "method": "POST", "url": "{{baseUrl}}/api/orders", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Ramesh Kumar\",\n  \"customerPhone\": \"9876543210\",\n  \"items\": [\n    { \"medicineId\": 1, \"quantity\": 2 },\n    { \"medicineId\": 7, \"quantity\": 1 }\n  ]\n}" } } },
+                { "name": "Create Order - Insufficient Stock (Error Test)", "request": { "method": "POST", "url": "{{baseUrl}}/api/orders", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Test Customer\",\n  \"customerPhone\": \"1234567890\",\n  \"items\": [\n    { \"medicineId\": 4, \"quantity\": 99999 }\n  ]\n}" } } },
+                { "name": "Get Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders/1", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Update Order Status to CONFIRMED", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/orders/1/status", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"CONFIRMED\"\n}" } } },
+                { "name": "Cancel Order", "request": { "method": "POST", "url": "{{baseUrl}}/api/orders/1/cancel", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } }
+            ]
+        },
+        {
+            "name": "Users (Admin Only)",
+            "item": [
+                { "name": "Get All Users", "request": { "method": "GET", "url": "{{baseUrl}}/api/users", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] } } },
+                { "name": "Create Staff User", "request": { "method": "POST", "url": "{{baseUrl}}/api/users", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] }, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Priya Sharma\",\n  \"email\": \"priya@medistock.com\",\n  \"password\": \"Staff@456\",\n  \"role\": \"STAFF\"\n}" } } },
+                { "name": "Staff Cannot Access Users (403 Test)", "request": { "method": "GET", "url": "{{baseUrl}}/api/users", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}" }] } } }
+            ]
+        }
+    ]
+}
