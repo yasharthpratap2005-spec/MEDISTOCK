@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0;url=backend/src/main/resources/static/pages/login.html">
+    <meta http-equiv="refresh" content="0;url=pages/login.html">
     <title>MEDISTOCK — Redirecting...</title>
     <style>
         body {
@@ -37,12 +37,12 @@
         <div class="spinner"></div>
         <h2>MEDISTOCK</h2>
         <p>Redirecting to application...</p>
-        <p><small>If you are not redirected automatically, <a href="backend/src/main/resources/static/pages/login.html">click here</a>.</small></p>
+        <p><small>If you are not redirected automatically, <a href="pages/login.html">click here</a>.</small></p>
     </div>
     <script>
         const target = localStorage.getItem('medistock_token') 
-            ? 'backend/src/main/resources/static/pages/dashboard.html' 
-            : 'backend/src/main/resources/static/pages/login.html';
+            ? 'pages/dashboard.html' 
+            : 'pages/login.html';
         window.location.href = target;
     </script>
 </body>
