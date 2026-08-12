@@ -1,0 +1,8 @@
+[build]
+  publish = "backend/src/main/resources/static"
+
+[[redirects]]
+  from = "/*"
+  to = "/pages/login.html"
+  status = 200
+  force = false

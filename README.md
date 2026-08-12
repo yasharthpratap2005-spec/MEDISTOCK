@@ -149,19 +149,29 @@ java -jar target/medistock-backend-1.0.0.jar
 
 ---
 
-## Frontend Setup
+## Frontend Setup & Deployment
 
-The frontend is served as static files from Spring Boot.
+### Option A: Served via Spring Boot (Local Development)
+When running the Spring Boot backend, static files are served directly:
+- Login: `http://localhost:8080/pages/login.html`
+- Dashboard: `http://localhost:8080/pages/dashboard.html`
 
-- Login: http://localhost:8080/pages/login.html
-- Dashboard: http://localhost:8080/pages/dashboard.html
-- Medicines: http://localhost:8080/pages/medicines.html
-- Inventory: http://localhost:8080/pages/inventory.html
-- Orders: http://localhost:8080/pages/orders.html
-- Categories: http://localhost:8080/pages/categories.html
-- Low Stock: http://localhost:8080/pages/low-stock.html
-- Expiry Alerts: http://localhost:8080/pages/expiry.html
-- Users: http://localhost:8080/pages/users.html
+### Option B: GitHub Pages
+An automated GitHub Actions workflow (`.github/workflows/deploy-pages.yml`) is included in the repository.
+1. Go to your repository **Settings** → **Pages**.
+2. Under **Build and deployment** → **Source**, select **GitHub Actions**.
+3. Push to `main` branch. Your frontend will be live at `https://<username>.github.io/MEDISTOCK/`.
+
+### Option C: Vercel / Netlify
+1. Connect your repository to Vercel or Netlify.
+2. Publish Directory / Output Directory: `backend/src/main/resources/static`
+3. Deploy! (Pre-configured via `vercel.json` and `netlify.toml`).
+
+### Configuring Backend API URL for Hosted Frontend
+If your frontend is hosted separately on GitHub Pages/Vercel and pointing to a remote backend server, set the backend API endpoint in your browser console:
+```javascript
+localStorage.setItem('medistock_api_url', 'https://your-backend-api.com/api');
+```
 
 ---
 

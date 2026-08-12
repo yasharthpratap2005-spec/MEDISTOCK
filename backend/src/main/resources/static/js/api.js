@@ -3,7 +3,17 @@
  * Centralized REST API calls
  */
 
-const API_BASE = '/api';
+const getApiBase = () => {
+    const saved = localStorage.getItem('medistock_api_url');
+    if (saved) return saved.replace(/\/$/, '');
+    if (window.location.port === '8080' || window.location.port === '3000') {
+        return '/api';
+    }
+    // Default fallback for hosted static frontend pointing to local/remote backend
+    return window.MEDISTOCK_API_URL || 'http://localhost:8080/api';
+};
+
+const API_BASE = getApiBase();
 
 const api = {
     _getHeaders() {
@@ -25,7 +35,8 @@ const api = {
         // Handle 401 - redirect to login
         if (response.status === 401) {
             localStorage.clear();
-            window.location.href = '/pages/login.html';
+            const inPages = window.location.pathname.includes('/pages/');
+            window.location.href = inPages ? 'login.html' : './pages/login.html';
             return;
         }
 

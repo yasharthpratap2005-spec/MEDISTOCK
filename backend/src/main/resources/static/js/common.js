@@ -14,11 +14,13 @@ const auth = {
     logout() {
         localStorage.removeItem('medistock_token');
         localStorage.removeItem('medistock_user');
-        window.location.href = '/pages/login.html';
+        const inPages = window.location.pathname.includes('/pages/');
+        window.location.href = inPages ? 'login.html' : './pages/login.html';
     },
     requireLogin() {
         if (!this.isLoggedIn()) {
-            window.location.href = '/pages/login.html';
+            const inPages = window.location.pathname.includes('/pages/');
+            window.location.href = inPages ? 'login.html' : './pages/login.html';
             return false;
         }
         return true;
@@ -201,6 +203,7 @@ function debounce(fn, delay = 350) {
 // ===== SIDEBAR HTML TEMPLATE =====
 function getSidebarHtml() {
     const isAdmin = auth.isAdmin();
+    const prefix = window.location.pathname.includes('/pages/') ? '' : 'pages/';
     return `
     <aside class="sidebar">
         <div class="sidebar-brand">
@@ -212,32 +215,32 @@ function getSidebarHtml() {
         </div>
         <nav class="sidebar-nav">
             <div class="sidebar-section-label">Main</div>
-            <a href="/pages/dashboard.html" class="sidebar-item" data-page="dashboard">
+            <a href="${prefix}dashboard.html" class="sidebar-item" data-page="dashboard">
                 <i class="bi bi-grid-1x2-fill"></i> Dashboard
             </a>
-            <a href="/pages/medicines.html" class="sidebar-item" data-page="medicines">
+            <a href="${prefix}medicines.html" class="sidebar-item" data-page="medicines">
                 <i class="bi bi-capsule"></i> Medicines
             </a>
-            ${isAdmin ? `<a href="/pages/categories.html" class="sidebar-item" data-page="categories">
+            ${isAdmin ? `<a href="${prefix}categories.html" class="sidebar-item" data-page="categories">
                 <i class="bi bi-tags-fill"></i> Categories
             </a>` : ''}
             <div class="sidebar-section-label">Inventory</div>
-            <a href="/pages/inventory.html" class="sidebar-item" data-page="inventory">
+            <a href="${prefix}inventory.html" class="sidebar-item" data-page="inventory">
                 <i class="bi bi-boxes"></i> Inventory
             </a>
-            <a href="/pages/low-stock.html" class="sidebar-item" data-page="low-stock">
+            <a href="${prefix}low-stock.html" class="sidebar-item" data-page="low-stock">
                 <i class="bi bi-exclamation-triangle-fill"></i> Low Stock
                 <span class="sidebar-badge" id="badge-lowstock" style="display:none"></span>
             </a>
-            <a href="/pages/expiry.html" class="sidebar-item" data-page="expiry">
+            <a href="${prefix}expiry.html" class="sidebar-item" data-page="expiry">
                 <i class="bi bi-calendar-x-fill"></i> Expiry Alerts
                 <span class="sidebar-badge" id="badge-expiry" style="display:none"></span>
             </a>
             <div class="sidebar-section-label">Operations</div>
-            <a href="/pages/orders.html" class="sidebar-item" data-page="orders">
+            <a href="${prefix}orders.html" class="sidebar-item" data-page="orders">
                 <i class="bi bi-cart-fill"></i> Orders
             </a>
-            ${isAdmin ? `<a href="/pages/users.html" class="sidebar-item" data-page="users">
+            ${isAdmin ? `<a href="${prefix}users.html" class="sidebar-item" data-page="users">
                 <i class="bi bi-people-fill"></i> Users
             </a>` : ''}
         </nav>

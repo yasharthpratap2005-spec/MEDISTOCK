@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0;url=/pages/login.html">
+    <meta http-equiv="refresh" content="0;url=./pages/login.html">
     <title>MEDISTOCK — Redirecting...</title>
 </head>
 <body>
     <script>
         if (localStorage.getItem('medistock_token')) {
-            window.location.href = '/pages/dashboard.html';
+            window.location.href = './pages/dashboard.html';
         } else {
-            window.location.href = '/pages/login.html';
+            window.location.href = './pages/login.html';
         }
     </script>
 </body>

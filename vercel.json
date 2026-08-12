@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "outputDirectory": "backend/src/main/resources/static",
+  "cleanUrls": false,
+  "routes": [
+    { "src": "/api/(.*)", "dest": "http://localhost:8080/api/$1" }
+  ]
+}
