@@ -1,5 +1,5 @@
 [build]
-  publish = "backend/src/main/resources/static"
+  publish = "."
 
 [[redirects]]
   from = "/*"

@@ -31,3 +31,5 @@ spring-shell.log
 # Maven Downloads (scratch)
 *.zip
 apache-maven-*/
+scratch/
+

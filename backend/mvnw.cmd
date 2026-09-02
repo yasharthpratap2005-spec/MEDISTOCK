@@ -47,7 +47,7 @@
 
 @SET MAVEN_CMD_LINE_ARGS=%*
 
-@SET WRAPPER_JAR="%~dp0.mvn\wrapper\maven-wrapper.jar"
+@SET "WRAPPER_JAR=%~dp0.mvn\wrapper\maven-wrapper.jar"
 @SET WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
 @SET DOWNLOAD_URL="https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.2.0/maven-wrapper-3.2.0.jar"
@@ -104,7 +104,7 @@
     @IF "%%A"=="distributionUrl" SET MAVEN_JAR_URL=%%B
 )
 
-"%MAVEN_JAVA_EXE%" %JVM_CONFIG_MAVEN_PROPS% %MAVEN_OPTS% %MAVEN_DEBUG_OPTS% -classpath "%WRAPPER_LAUNCHER_CLASSPATH%" "-Dmaven.multiModuleProjectDirectory=%~dp0" %WRAPPER_LAUNCHER% %MAVEN_CMD_LINE_ARGS%
+%MAVEN_JAVA_EXE% %JVM_CONFIG_MAVEN_PROPS% %MAVEN_OPTS% %MAVEN_DEBUG_OPTS% -classpath "%WRAPPER_LAUNCHER_CLASSPATH%" "-Dmaven.multiModuleProjectDirectory=%CD%" %WRAPPER_LAUNCHER% %MAVEN_CMD_LINE_ARGS%
 if ERRORLEVEL 1 goto error
 goto end
 
