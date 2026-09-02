@@ -165,9 +165,51 @@ async function updateSidebarBadges() {
         const summary = res.data;
         const lowBadge = document.getElementById('badge-lowstock');
         const expBadge = document.getElementById('badge-expiry');
-        if (lowBadge && summary.lowStockCount > 0) lowBadge.textContent = summary.lowStockCount;
-        if (expBadge && (summary.expiringSoonCount + summary.expiredCount) > 0) expBadge.textContent = summary.expiringSoonCount + summary.expiredCount;
+        if (lowBadge) {
+            lowBadge.textContent = summary.lowStockCount + summary.outOfStockCount;
+            lowBadge.style.display = (summary.lowStockCount + summary.outOfStockCount) > 0 ? 'inline-flex' : 'none';
+        }
+        if (expBadge) {
+            expBadge.textContent = summary.expiringSoonCount + summary.expiredCount;
+            expBadge.style.display = (summary.expiringSoonCount + summary.expiredCount) > 0 ? 'inline-flex' : 'none';
+        }
     } catch (e) { /* ignore */ }
+}
+
+// ===== PAGINATION HELPER =====
+function renderPagination(containerId, totalPages, currentPage, onPageClickName = 'changePage') {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (totalPages <= 1) {
+        el.innerHTML = '';
+        return;
+    }
+
+    let html = `<div class="pagination-controls">`;
+    html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="${onPageClickName}(${currentPage - 1})"><i class="bi bi-chevron-left"></i> Prev</button>`;
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+    if (startPage > 1) {
+        html += `<button class="page-btn" onclick="${onPageClickName}(1)">1</button>`;
+        if (startPage > 2) html += `<span class="page-dots">...</span>`;
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+        html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="${onPageClickName}(${p})">${p}</button>`;
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span class="page-dots">...</span>`;
+        html += `<button class="page-btn" onclick="${onPageClickName}(${totalPages})">${totalPages}</button>`;
+    }
+
+    html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="${onPageClickName}(${currentPage + 1})">Next <i class="bi bi-chevron-right"></i></button>`;
+    html += `</div>`;
+
+    el.innerHTML = html;
 }
 
 // ===== MODAL HELPERS =====

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory — MEDISTOCK</title>
-    <meta name="description" content="MEDISTOCK inventory management - view and update stock levels">
+    <title>Inventory Movements — MEDISTOCK</title>
+    <meta name="description" content="MEDISTOCK Inventory Management - Stock In, Stock Out and Replenishment">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../css/style.css">
 </head>
@@ -16,112 +16,51 @@
         <div class="page-content">
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">Inventory</h1>
-                    <p class="page-subtitle">Monitor stock levels and update medicine quantities</p>
+                    <h1 class="page-title">Inventory Stock Movements</h1>
+                    <p class="page-subtitle">Track, audit, and adjust stock balances across all product lines</p>
                 </div>
+                <a href="medicines.html" class="btn-primary-custom" style="text-decoration:none">
+                    <i class="bi bi-box-seam"></i> Full Catalogue
+                </a>
             </div>
 
             <!-- Filter Bar -->
-            <div class="filter-bar">
-                <div class="search-box">
+            <div class="filter-bar" style="margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap">
+                <div class="search-box" style="flex:2;min-width:240px">
                     <i class="bi bi-search search-icon"></i>
-                    <input type="text" id="inv-search" placeholder="Search medicines..." oninput="filterInventory()">
+                    <input type="text" id="inv-search" placeholder="Search inventory by product, SKU, batch..." oninput="debouncedSearch()">
                 </div>
-                <select class="filter-select" id="inv-stock-filter" onchange="filterInventory()">
-                    <option value="">All Stock Status</option>
-                    <option value="IN_STOCK">In Stock</option>
-                    <h1 class="page-title">Inventory Management</h1>
-                    <p class="page-subtitle">Track stock levels, record stock-in / stock-out transactions</p>
-                </div>
+                <select class="filter-select" id="inv-category" onchange="loadInventory()" style="flex:1;min-width:160px">
+                    <option value="ALL">All Categories</option>
+                    <option value="Medicines">Medicines</option>
+                    <option value="Wellness & Supplements">Wellness & Supplements</option>
+                    <option value="Medical Supplies">Medical Supplies</option>
+                </select>
+                <select class="filter-select" id="inv-status" onchange="loadInventory()" style="flex:1;min-width:140px">
+                    <option value="ALL">All Stock Status</option>
+                    <option value="IN_STOCK">🟢 In Stock</option>
+                    <option value="LOW_STOCK">🟡 Low Stock</option>
+                    <option value="OUT_OF_STOCK">🔴 Out of Stock</option>
+                </select>
             </div>
 
-            <div class="table-wrapper">
-                <div style="padding:16px 20px;border-bottom:1px solid #334155;display:flex;gap:12px">
-                    <div style="position:relative;flex:1;max-width:320px">
-                        <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#64748b"></i>
-                        <input type="text" class="form-control-custom" id="inv-search" placeholder="Filter inventory..." style="padding-left:36px">
-                    </div>
-                </div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Medicine</th>
-                            <th>Category</th>
-                            <th>Batch #</th>
-                            <th>Stock Qty</th>
-                            <th>Min Stock</th>
-                            <th>Max Stock</th>
-                            <th>Status</th>
-                            <th>Last Updated</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-tbody">
-                        <tr><td colspan="10"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div><p>Loading inventory...</p></div></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-                                <i class="bi bi-arrow-down-circle-fill" style="font-size:20px;color:#2563eb"></i>
-                                <div style="font-size:13px;font-weight:600;color:#1d4ed8;margin-top:4px">Stock In</div>
-                                <div style="font-size:11px;color:#3b82f6">Add to stock</div>
-                            </div>
-                        </label>
-                        <label class="type-btn" id="type-out">
-                            <input type="radio" name="txn-type" value="STOCK_OUT" style="display:none">
-                            <div style="border:2px solid #e2e8f0;background:#f8fafc;border-radius:10px;padding:12px;text-align:center;cursor:pointer">
-                                <i class="bi bi-arrow-up-circle-fill" style="font-size:20px;color:#64748b"></i>
-                                <div style="font-size:13px;font-weight:600;color:#374151;margin-top:4px">Stock Out</div>
-                                <div style="font-size:11px;color:#94a3b8">Remove from stock</div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label required">Quantity</label>
-                    <input type="number" class="form-control-custom" id="stock-qty" min="1" placeholder="Enter quantity" value="1">
-                    <div class="form-error" id="e-stock-qty"></div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Reason</label>
-                    <input type="text" class="form-control-custom" id="stock-reason" placeholder="e.g., Regular restock, Dispensed to patient...">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary-custom" onclick="closeModal('stock-modal')">Cancel</button>
-                <button class="btn-primary-custom" onclick="submitStockUpdate()" id="btn-stock-save">
-                    <i class="bi bi-check2"></i> Update Stock
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Stock History Modal -->
-    <div class="modal-overlay" id="history-modal">
-        <div class="modal-box" style="max-width:700px">
-            <div class="modal-header">
-                <h5 class="modal-title">Stock History — <span id="history-med-name"></span></h5>
-                <button class="modal-close" onclick="closeModal('history-modal')"><i class="bi bi-x"></i></button>
-            </div>
-            <div class="modal-body" style="padding:0">
-                <div class="table-wrapper" style="border-radius:0;border:none">
+            <div class="card" style="padding:0;overflow:hidden">
+                <div class="table-wrapper">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Qty</th>
-                                <th>Before</th>
-                                <th>After</th>
-                                <th>Reason</th>
-                                <th>By</th>
+                                <th>Product / SKU</th>
+                                <th>Category & Subcategory</th>
+                                <th>Batch #</th>
+                                <th>Current Stock</th>
+                                <th>Reorder Threshold</th>
+                                <th>Unit Selling Price</th>
+                                <th>Stock Status</th>
+                                <th style="text-align:right">Stock Action</th>
                             </tr>
                         </thead>
-                        <tbody id="history-tbody">
-                            <tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">Loading...</td></tr>
+                        <tbody id="inventory-tbody">
+                            <tr><td colspan="8"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div><p>Loading inventory...</p></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -129,170 +68,109 @@
         </div>
     </div>
 
+    <!-- Stock Adjust Modal -->
+    <div class="modal-overlay" id="stock-adjust-modal">
+        <div class="modal-box" style="max-width:440px">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Stock Movement</h5>
+                <button class="modal-close" onclick="closeModal('stock-adjust-modal')"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="adj-prod-name" style="font-weight:600;margin:0 0 16px;color:#0f172a"></p>
+                <div class="form-group">
+                    <label class="form-label">Movement Direction</label>
+                    <select class="form-control-custom" id="adj-type">
+                        <option value="ADD">➕ Stock In (Receive Delivery / Restock)</option>
+                        <option value="SUB">➖ Stock Out (Dispensed / Issue / Damaged)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control-custom" id="adj-qty" placeholder="e.g. 50" min="1" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-custom" onclick="closeModal('stock-adjust-modal')">Cancel</button>
+                <button class="btn-primary-custom" onclick="confirmStockAdjustment()">Post Movement</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../js/api.js"></script>
     <script src="../js/common.js"></script>
     <script>
-        if (!initLayout('Inventory')) {}
+        if (!initLayout('Inventory Movements')) {}
 
-        let allInventory = [];
-        let currentMedicineId = null;
-        let currentMedicineQty = 0;
+        let adjustId = null;
+        const debouncedSearch = debounce(() => loadInventory(), 300);
 
         async function loadInventory() {
             const tbody = document.getElementById('inventory-tbody');
+            const keyword = document.getElementById('inv-search').value;
+            const category = document.getElementById('inv-category').value;
+            const stockStatus = document.getElementById('inv-status').value;
+
             try {
-                const res = await api.getInventory();
-                allInventory = res?.data || [];
-                renderInventory(allInventory);
-            } catch (err) {
-                toast.show('Failed to load inventory: ' + err.message, 'error');
-                showEmptyState(tbody, 'Failed to load inventory', 'bi-exclamation-circle');
-            }
-        }
+                const res = await api.getMedicines({ keyword, category, stockStatus, limit: 300 });
+                const meds = res?.data || [];
 
-        function renderInventory(medicines) {
-            const tbody = document.getElementById('inventory-tbody');
-            if (medicines.length === 0) {
-                showEmptyState(tbody, 'No inventory data found', 'bi-boxes');
-                return;
-            }
-            tbody.innerHTML = medicines.map((m, i) => `
-                <tr>
-                    <td style="color:#94a3b8;font-size:12px">${i+1}</td>
-                    <td>
-                        <div class="med-name">${m.medicineName}</div>
-                        <div class="med-generic">${m.genericName || m.manufacturer}</div>
-                    </td>
-                    <td><span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:6px">${m.categoryName}</span></td>
-                    <td style="font-size:12px;color:#64748b">${m.batchNumber}</td>
-                    <td style="font-weight:600">${fmt.currency(m.price)}</td>
-                    <td>
-                        <span style="font-size:18px;font-weight:700;color:${m.quantity === 0 ? '#dc2626' : m.quantity <= m.minimumStockLevel ? '#d97706' : '#16a34a'}">${m.quantity}</span>
-                    </td>
-                    <td style="color:#64748b">${m.minimumStockLevel}</td>
-                    <td style="font-size:12px">${fmt.date(m.expiryDate)}</td>
-                    <td>${fmt.stockBadge(m.stockStatus)}</td>
-                    <td>
-                        <div style="display:flex;gap:6px">
-                            <button class="btn-icon success" onclick="openStockModal(${m.id}, '${m.medicineName.replace(/'/g,"\\'")}', ${m.quantity})" title="Update Stock">
-                                <i class="bi bi-arrow-left-right"></i>
-                            </button>
-                            <button class="btn-icon" onclick="viewHistory(${m.id}, '${m.medicineName.replace(/'/g,"\\'")}')">
-                                <i class="bi bi-clock-history"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function filterInventory() {
-            const keyword = document.getElementById('inv-search').value.toLowerCase();
-            const stockFilter = document.getElementById('inv-stock-filter').value;
-            let filtered = allInventory.filter(m => {
-                const matchKeyword = !keyword ||
-                    m.medicineName.toLowerCase().includes(keyword) ||
-                    (m.genericName || '').toLowerCase().includes(keyword) ||
-                    m.batchNumber.toLowerCase().includes(keyword);
-                const matchStock = !stockFilter || m.stockStatus === stockFilter;
-                return matchKeyword && matchStock;
-            });
-            renderInventory(filtered);
-        }
-
-        function openStockModal(id, name, qty) {
-            currentMedicineId = id;
-            currentMedicineQty = qty;
-            document.getElementById('stock-modal-title').textContent = 'Update Stock';
-            document.getElementById('stock-med-name').textContent = name;
-            document.getElementById('current-qty').textContent = qty;
-            document.getElementById('stock-qty').value = 1;
-            document.getElementById('stock-reason').value = '';
-            document.getElementById('e-stock-qty').textContent = '';
-            // Reset to STOCK_IN
-            document.querySelector('input[name="txn-type"][value="STOCK_IN"]').checked = true;
-            updateTypeUI();
-            openModal('stock-modal');
-        }
-
-        function updateTypeUI() {
-            const isIn = document.querySelector('input[name="txn-type"]:checked').value === 'STOCK_IN';
-            const inDiv = document.getElementById('type-in').querySelector('div');
-            const outDiv = document.getElementById('type-out').querySelector('div');
-            if (isIn) {
-                inDiv.style.borderColor = '#2563eb'; inDiv.style.background = '#dbeafe';
-                inDiv.querySelector('i').style.color = '#2563eb';
-                inDiv.querySelector('.font-weight-600, div:first-of-type').style.color = '#1d4ed8';
-                outDiv.style.borderColor = '#e2e8f0'; outDiv.style.background = '#f8fafc';
-            } else {
-                outDiv.style.borderColor = '#dc2626'; outDiv.style.background = '#fee2e2';
-                outDiv.querySelector('i').style.color = '#dc2626';
-                inDiv.style.borderColor = '#e2e8f0'; inDiv.style.background = '#f8fafc';
-            }
-        }
-
-        document.querySelectorAll('input[name="txn-type"]').forEach(r => r.addEventListener('change', updateTypeUI));
-
-        async function submitStockUpdate() {
-            const qty = parseInt(document.getElementById('stock-qty').value);
-            const reason = document.getElementById('stock-reason').value;
-            const txnType = document.querySelector('input[name="txn-type"]:checked').value;
-
-            if (!qty || qty < 1) {
-                document.getElementById('e-stock-qty').textContent = 'Quantity must be at least 1';
-                return;
-            }
-
-            const btn = document.getElementById('btn-stock-save');
-            btn.disabled = true;
-            try {
-                const data = { transactionType: txnType, quantity: qty, reason };
-                if (txnType === 'STOCK_IN') {
-                    await api.stockIn(currentMedicineId, data);
-                    toast.show(`Added ${qty} units to stock!`, 'success');
-                } else {
-                    await api.stockOut(currentMedicineId, data);
-                    toast.show(`Removed ${qty} units from stock!`, 'success');
-                }
-                closeModal('stock-modal');
-                loadInventory();
-            } catch (err) {
-                toast.show(err.message, 'error');
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        async function viewHistory(medicineId, name) {
-            document.getElementById('history-med-name').textContent = name;
-            openModal('history-modal');
-            const tbody = document.getElementById('history-tbody');
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">Loading...</td></tr>';
-            try {
-                const res = await api.getStockHistory(medicineId);
-                const history = res?.data || [];
-                if (history.length === 0) {
-                    showEmptyState(tbody, 'No transaction history', 'bi-clock-history');
+                if (meds.length === 0) {
+                    showEmptyState(tbody, 'No matching inventory items found', 'bi-search');
                     return;
                 }
-                tbody.innerHTML = history.map(h => `
+
+                tbody.innerHTML = meds.map(m => `
                     <tr>
-                        <td style="font-size:12px">${fmt.datetime(h.createdAt)}</td>
                         <td>
-                            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
-                                ${h.transactionType === 'STOCK_IN' ? 'background:#dcfce7;color:#16a34a' : 'background:#fee2e2;color:#dc2626'}">
-                                ${h.transactionType === 'STOCK_IN' ? '↓ IN' : '↑ OUT'}
-                            </span>
+                            <div class="med-name">${m.medicineName}</div>
+                            <div class="med-generic">${m.brandName || ''} • <span style="font-family:monospace;color:#2563eb">${m.sku}</span></div>
                         </td>
-                        <td style="font-weight:700">${h.quantity}</td>
-                        <td style="color:#64748b">${h.previousQuantity}</td>
-                        <td style="font-weight:600">${h.newQuantity}</td>
-                        <td style="font-size:12px;color:#64748b">${h.reason || '—'}</td>
-                        <td style="font-size:12px;color:#64748b">${h.performedByName}</td>
+                        <td>
+                            <div><strong>${m.category}</strong></div>
+                            <div class="subcat-pill">${m.subcategory || 'General'}</div>
+                        </td>
+                        <td><span style="font-family:monospace">${m.batchNumber}</span></td>
+                        <td><strong style="font-size:15px">${m.quantity} units</strong></td>
+                        <td>${m.minimumStockLevel} units</td>
+                        <td>${fmt.currency(m.sellingPrice)}</td>
+                        <td>${fmt.stockBadge(m.stockStatus)}</td>
+                        <td style="text-align:right">
+                            <button class="btn-primary-custom" style="padding:4px 10px;font-size:12px" onclick="openStockAdjustModal(${m.id}, '${m.medicineName.replace(/'/g, "\\'")}')">
+                                <i class="bi bi-box-seam"></i> Post Movement
+                            </button>
+                        </td>
                     </tr>
                 `).join('');
             } catch (err) {
-                toast.show('Failed to load history: ' + err.message, 'error');
+                toast.show('Failed to load inventory: ' + err.message, 'error');
+            }
+        }
+
+        function openStockAdjustModal(id, name) {
+            adjustId = id;
+            document.getElementById('adj-prod-name').textContent = name;
+            document.getElementById('adj-qty').value = '';
+            openModal('stock-adjust-modal');
+        }
+
+        async function confirmStockAdjustment() {
+            const type = document.getElementById('adj-type').value;
+            const amount = parseInt(document.getElementById('adj-qty').value || 0);
+
+            if (!amount || amount <= 0) {
+                toast.show('Enter a valid quantity', 'error');
+                return;
+            }
+
+            const change = type === 'ADD' ? amount : -amount;
+
+            try {
+                await api.adjustStock(adjustId, change);
+                toast.show('Stock movement posted successfully!', 'success');
+                closeModal('stock-adjust-modal');
+                loadInventory();
+            } catch (e) {
+                toast.show(e.message, 'error');
             }
         }
 

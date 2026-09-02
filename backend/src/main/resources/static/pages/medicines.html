@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicines — MEDISTOCK</title>
-    <meta name="description" content="Manage medicines in MEDISTOCK pharmacy inventory">
+    <title>Inventory Catalogue — MEDISTOCK</title>
+    <meta name="description" content="MEDISTOCK Product Catalogue - Pharmacy inventory management and stock tracking">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../css/style.css">
 </head>
@@ -14,139 +14,283 @@
 
     <div class="main-content">
         <div class="page-content">
+            <!-- Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">Medicines</h1>
-                    <p class="page-subtitle">Manage medicine catalog and stock levels</p>
+                    <h1 class="page-title">Product Catalogue</h1>
+                    <p class="page-subtitle">Manage inventory, stock status, pricing, and reorder levels across 120+ items</p>
                 </div>
-                <button class="btn-primary-custom" id="btn-add-medicine" onclick="openAddModal()">
-                    <i class="bi bi-plus-lg"></i> Add Medicine
-                </button>
+                <div style="display:flex;gap:10px">
+                    <button class="btn-secondary-custom" onclick="resetFilters()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
+                    </button>
+                    <button class="btn-primary-custom" id="btn-add-medicine" onclick="openAddModal()">
+                        <i class="bi bi-plus-lg"></i> Add New Product
+                    </button>
+                </div>
             </div>
 
             <!-- Filter Bar -->
-            <div class="filter-bar">
-                <div class="search-box">
+            <div class="filter-bar" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+                <div class="search-box" style="flex:2;min-width:240px">
                     <i class="bi bi-search search-icon"></i>
-                    <input type="text" id="search-input" placeholder="Search medicines, generic name, manufacturer..." oninput="debouncedSearch()">
+                    <input type="text" id="search-input" placeholder="Search product name, generic, SKU, brand, supplier..." oninput="debouncedSearch()">
                 </div>
-                <select class="filter-select" id="filter-category" onchange="loadMedicines()">
-                    <option value="">All Categories</option>
+                <select class="filter-select" id="filter-category" onchange="onCategoryChange()" style="flex:1;min-width:160px">
+                    <option value="ALL">All Categories</option>
+                    <option value="Medicines">Medicines</option>
+                    <option value="Wellness & Supplements">Wellness & Supplements</option>
+                    <option value="Medical Supplies">Medical Supplies</option>
                 </select>
-                <select class="filter-select" id="filter-active" onchange="loadMedicines()">
-                    <option value="">All Status</option>
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
+                <select class="filter-select" id="filter-subcategory" onchange="loadMedicines(1)" style="flex:1;min-width:160px">
+                    <option value="ALL">All Subcategories</option>
+                </select>
+                <select class="filter-select" id="filter-status" onchange="loadMedicines(1)" style="flex:1;min-width:140px">
+                    <option value="ALL">All Stock Status</option>
+                    <option value="IN_STOCK">🟢 In Stock</option>
+                    <option value="LOW_STOCK">🟡 Low Stock</option>
+                    <option value="OUT_OF_STOCK">🔴 Out of Stock</option>
+                </select>
+                <select class="filter-select" id="filter-expiry" onchange="loadMedicines(1)" style="flex:1;min-width:140px">
+                    <option value="ALL">All Expiry Status</option>
+                    <option value="VALID">Valid</option>
+                    <option value="EXPIRING_SOON">⚠️ Expiring Soon</option>
+                    <option value="EXPIRED">🔴 Expired</option>
+                </select>
+                <select class="filter-select" id="filter-sort" onchange="loadMedicines(1)" style="flex:1;min-width:140px">
+                    <option value="name">Sort: Name (A-Z)</option>
+                    <option value="qty_asc">Sort: Qty (Low-High)</option>
+                    <option value="qty_desc">Sort: Qty (High-Low)</option>
+                    <option value="price_asc">Sort: Price (Low-High)</option>
+                    <option value="price_desc">Sort: Price (High-Low)</option>
+                    <option value="expiry_asc">Sort: Expiry Date</option>
                 </select>
             </div>
 
-            <!-- Medicines Table -->
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Medicine</th>
-                            <th>Category</th>
-                            <th>Batch</th>
-                            <th>Price</th>
-                            <th>Qty</th>
-                            <th>Expiry</th>
-                            <th>Stock</th>
-                            <th>Expiry Status</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="medicines-tbody">
-                        <tr><td colspan="11"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div><p>Loading medicines...</p></div></td></tr>
-                    </tbody>
-                </table>
+            <!-- Medicines Table Card -->
+            <div class="card" style="padding:0;overflow:hidden">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product / SKU</th>
+                                <th>Category & Subcategory</th>
+                                <th>Strength & Pack</th>
+                                <th>Stock & Reorder</th>
+                                <th>Selling Price</th>
+                                <th>Expiry Date</th>
+                                <th>Stock Status</th>
+                                <th style="text-align:right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="medicines-tbody">
+                            <tr><td colspan="8"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div><p>Loading catalogue...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Footer -->
+                <div class="pagination-container" id="pagination-wrapper">
+                    <div class="pagination-info" id="pagination-info">Showing 0 of 0 products</div>
+                    <div id="pagination-controls-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div class="modal-overlay" id="product-detail-modal">
+        <div class="modal-box" style="max-width:680px">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="d-name">Product Details</h5>
+                    <span class="subcat-pill" id="d-sku">SKU-000</span>
+                </div>
+                <button class="modal-close" onclick="closeModal('product-detail-modal')"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Generic Name</div>
+                        <div class="detail-value" id="d-generic">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Brand Name</div>
+                        <div class="detail-value" id="d-brand">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Category / Subcategory</div>
+                        <div class="detail-value" id="d-category">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Strength & Pack Size</div>
+                        <div class="detail-value" id="d-pack">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Current Stock Level</div>
+                        <div class="detail-value" id="d-stock">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Reorder Level</div>
+                        <div class="detail-value" id="d-reorder">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Purchase Price</div>
+                        <div class="detail-value" id="d-price-p">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Selling Price</div>
+                        <div class="detail-value" id="d-price-s">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Batch Number</div>
+                        <div class="detail-value" id="d-batch">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Expiry Date</div>
+                        <div class="detail-value" id="d-expiry">—</div>
+                    </div>
+                    <div class="detail-item" style="grid-column:span 2">
+                        <div class="detail-label">Supplier Information</div>
+                        <div class="detail-value" id="d-supplier">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-custom" onclick="closeModal('product-detail-modal')">Close</button>
+                <button class="btn-primary-custom" id="btn-detail-adjust"><i class="bi bi-box-seam"></i> Adjust Stock</button>
+                <button class="btn-primary-custom" id="btn-detail-edit" style="background:#0284c7"><i class="bi bi-pencil"></i> Edit Product</button>
             </div>
         </div>
     </div>
 
     <!-- Add/Edit Medicine Modal -->
     <div class="modal-overlay" id="medicine-modal">
-        <div class="modal-box" style="max-width:700px">
+        <div class="modal-box" style="max-width:720px">
             <div class="modal-header">
-                <h5 class="modal-title" id="modal-title">Add Medicine</h5>
+                <h5 class="modal-title" id="modal-title">Add Product</h5>
                 <button class="modal-close" onclick="closeModal('medicine-modal')"><i class="bi bi-x"></i></button>
             </div>
             <div class="modal-body">
                 <form id="medicine-form" novalidate>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
                         <div class="form-group">
-                            <label class="form-label required">Medicine Name</label>
-                            <input type="text" class="form-control-custom" id="f-name" placeholder="e.g., Paracetamol 500mg" required>
-                            <div class="form-error" id="e-name"></div>
+                            <label class="form-label required">Product Name</label>
+                            <input type="text" class="form-control-custom" id="f-name" placeholder="e.g., Paracetamol 500 mg" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Generic Name</label>
                             <input type="text" class="form-control-custom" id="f-generic" placeholder="e.g., Acetaminophen">
                         </div>
                         <div class="form-group">
-                            <label class="form-label required">Category</label>
-                            <select class="form-control-custom" id="f-category" required>
-                                <option value="">Select category...</option>
-                            </select>
-                            <div class="form-error" id="e-category"></div>
+                            <label class="form-label required">Brand Name</label>
+                            <input type="text" class="form-control-custom" id="f-brand" placeholder="e.g., Crocin 500" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label required">Manufacturer</label>
-                            <input type="text" class="form-control-custom" id="f-manufacturer" placeholder="e.g., Sun Pharma" required>
-                            <div class="form-error" id="e-manufacturer"></div>
+                            <label class="form-label">SKU</label>
+                            <input type="text" class="form-control-custom" id="f-sku" placeholder="Auto-generated if empty">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Category</label>
+                            <select class="form-control-custom" id="f-category" onchange="onModalCategoryChange()" required>
+                                <option value="Medicines">Medicines</option>
+                                <option value="Wellness & Supplements">Wellness & Supplements</option>
+                                <option value="Medical Supplies">Medical Supplies</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Subcategory</label>
+                            <select class="form-control-custom" id="f-subcategory" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Strength / Dosage</label>
+                            <input type="text" class="form-control-custom" id="f-strength" placeholder="e.g., 500 mg">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pack Size</label>
+                            <input type="text" class="form-control-custom" id="f-pack" placeholder="e.g., 10 Tablets / Strip">
                         </div>
                         <div class="form-group">
                             <label class="form-label required">Batch Number</label>
-                            <input type="text" class="form-control-custom" id="f-batch" placeholder="e.g., SP-2024-001" required>
-                            <div class="form-error" id="e-batch"></div>
+                            <input type="text" class="form-control-custom" id="f-batch" placeholder="e.g., BAT-2026-101" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label required">Price (₹)</label>
-                            <input type="number" class="form-control-custom" id="f-price" placeholder="0.00" step="0.01" min="0.01" required>
-                            <div class="form-error" id="e-price"></div>
+                            <label class="form-label required">Supplier</label>
+                            <select class="form-control-custom" id="f-supplier" required>
+                                <option value="Sun Pharma Direct">Sun Pharma Direct</option>
+                                <option value="Cipla Lifesciences">Cipla Lifesciences</option>
+                                <option value="Apollo Medical Wholesalers">Apollo Medical Wholesalers</option>
+                                <option value="Dr. Reddy's Logistics">Dr. Reddy's Logistics</option>
+                                <option value="GSK Healthcare India">GSK Healthcare India</option>
+                                <option value="Abbott Healthcare">Abbott Healthcare</option>
+                                <option value="Mankind Pharma Supply">Mankind Pharma Supply</option>
+                                <option value="Alkem Laboratories">Alkem Laboratories</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label required">Quantity</label>
-                            <input type="number" class="form-control-custom" id="f-quantity" placeholder="0" min="0" required>
-                            <div class="form-error" id="e-quantity"></div>
+                            <label class="form-label required">Quantity in Stock</label>
+                            <input type="number" class="form-control-custom" id="f-quantity" placeholder="100" min="0" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label required">Minimum Stock Level</label>
-                            <input type="number" class="form-control-custom" id="f-minstock" placeholder="10" min="0" required>
-                            <div class="form-error" id="e-minstock"></div>
+                            <label class="form-label required">Reorder Level</label>
+                            <input type="number" class="form-control-custom" id="f-minstock" placeholder="30" min="0" required>
                         </div>
                         <div class="form-group">
+                            <label class="form-label required">Purchase Price (₹)</label>
+                            <input type="number" class="form-control-custom" id="f-price-p" placeholder="18.00" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Selling Price (₹)</label>
+                            <input type="number" class="form-control-custom" id="f-price-s" placeholder="25.50" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group" style="grid-column:span 2">
                             <label class="form-label required">Expiry Date</label>
                             <input type="date" class="form-control-custom" id="f-expiry" required>
-                            <div class="form-error" id="e-expiry"></div>
                         </div>
-                        <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:30px">
-                            <input type="checkbox" id="f-prescription" style="width:16px;height:16px;accent-color:#2563eb">
-                            <label for="f-prescription" style="font-size:13px;font-weight:500;color:#374151;cursor:pointer">Prescription Required</label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control-custom" id="f-description" rows="3" placeholder="Brief description of the medicine..."></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary-custom" onclick="closeModal('medicine-modal')">Cancel</button>
                 <button class="btn-primary-custom" onclick="saveMedicine()" id="btn-save">
-                    <i class="bi bi-check2"></i> Save Medicine
+                    <i class="bi bi-check2"></i> Save Product
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Confirm Deactivate Modal -->
-    <div class="modal-overlay" id="confirm-modal">
+    <!-- Stock Adjust Modal -->
+    <div class="modal-overlay" id="stock-adjust-modal">
         <div class="modal-box" style="max-width:440px">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Action</h5>
+                <h5 class="modal-title">Adjust Stock Level</h5>
+                <button class="modal-close" onclick="closeModal('stock-adjust-modal')"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="adj-prod-name" style="font-weight:600;margin:0 0 16px;color:#0f172a"></p>
+                <div class="form-group">
+                    <label class="form-label">Adjustment Type</label>
+                    <select class="form-control-custom" id="adj-type">
+                        <option value="ADD">➕ Stock In (Add Units)</option>
+                        <option value="SUB">➖ Stock Out (Reduce Units)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control-custom" id="adj-qty" placeholder="e.g. 50" min="1" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-custom" onclick="closeModal('stock-adjust-modal')">Cancel</button>
+                <button class="btn-primary-custom" onclick="confirmStockAdjustment()">Confirm Adjustment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-box" style="max-width:420px">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
                 <button class="modal-close" onclick="closeModal('confirm-modal')"><i class="bi bi-x"></i></button>
             </div>
             <div class="modal-body">
@@ -154,9 +298,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary-custom" onclick="closeModal('confirm-modal')">Cancel</button>
-                <button class="btn-primary-custom" id="btn-confirm" style="background:#dc2626">
-                    <i class="bi bi-check2"></i> Confirm
-                </button>
+                <button class="btn-primary-custom" id="btn-confirm" style="background:#dc2626">Delete</button>
             </div>
         </div>
     </div>
@@ -164,204 +306,280 @@
     <script src="../js/api.js"></script>
     <script src="../js/common.js"></script>
     <script>
-        if (!initLayout('Medicines')) {}
+        if (!initLayout('Product Catalogue')) {}
 
+        let currentPage = 1;
         let editingId = null;
-        let isAdmin = auth.isAdmin();
+        let adjustId = null;
+        const limit = 12;
 
-        // Hide add button if not admin
-        if (!isAdmin) document.getElementById('btn-add-medicine').style.display = 'none';
+        const subcategories = {
+            'Medicines': ['Pain Relief', 'Fever', 'Cold & Cough', 'Antibiotics', 'Gastrointestinal', 'Allergy', 'Respiratory', 'Cardiovascular', 'Diabetes', 'Dermatology'],
+            'Wellness & Supplements': ['Vitamins', 'Minerals', 'Nutritional Supplements', 'ORS & Hydration'],
+            'Medical Supplies': ['First Aid', 'Bandages & Dressings', 'Gloves', 'Syringes', 'Antiseptics', 'Other Medical Supplies']
+        };
 
-        const debouncedSearch = debounce(() => loadMedicines(), 350);
+        const debouncedSearch = debounce(() => loadMedicines(1), 300);
 
-        async function loadCategories() {
-            const res = await api.getCategories(true);
-            const cats = res?.data || [];
-            const selects = ['filter-category', 'f-category'];
-            selects.forEach(id => {
-                const sel = document.getElementById(id);
-                if (!sel) return;
-                const currentVal = sel.value;
-                if (id === 'filter-category') sel.innerHTML = '<option value="">All Categories</option>';
-                else sel.innerHTML = '<option value="">Select category...</option>';
-                cats.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.id;
-                    opt.textContent = c.name;
-                    sel.appendChild(opt);
+        function onCategoryChange() {
+            const cat = document.getElementById('filter-category').value;
+            const subSelect = document.getElementById('filter-subcategory');
+            subSelect.innerHTML = '<option value="ALL">All Subcategories</option>';
+            if (cat && cat !== 'ALL' && subcategories[cat]) {
+                subcategories[cat].forEach(sub => {
+                    subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
                 });
-                if (currentVal) sel.value = currentVal;
-            });
+            }
+            loadMedicines(1);
         }
 
-        async function loadMedicines() {
-            const keyword = document.getElementById('search-input').value.trim();
-            const categoryId = document.getElementById('filter-category').value;
-            const active = document.getElementById('filter-active').value;
+        function onModalCategoryChange() {
+            const cat = document.getElementById('f-category').value;
+            const subSelect = document.getElementById('f-subcategory');
+            subSelect.innerHTML = '';
+            if (subcategories[cat]) {
+                subcategories[cat].forEach(sub => {
+                    subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+                });
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('filter-category').value = 'ALL';
+            document.getElementById('filter-subcategory').value = 'ALL';
+            document.getElementById('filter-status').value = 'ALL';
+            document.getElementById('filter-expiry').value = 'ALL';
+            document.getElementById('filter-sort').value = 'name';
+            onCategoryChange();
+        }
+
+        async function loadMedicines(page = currentPage) {
+            currentPage = page;
+            const keyword = document.getElementById('search-input').value;
+            const category = document.getElementById('filter-category').value;
+            const subcategory = document.getElementById('filter-subcategory').value;
+            const stockStatus = document.getElementById('filter-status').value;
+            const expiryStatus = document.getElementById('filter-expiry').value;
+            const sortBy = document.getElementById('filter-sort').value;
+
             const tbody = document.getElementById('medicines-tbody');
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#94a3b8">Loading...</td></tr>';
+
             try {
-                const res = await api.getMedicines(keyword, categoryId, active);
-                const medicines = res?.data || [];
-                if (medicines.length === 0) {
-                    showEmptyState(tbody, 'No medicines found', 'bi-capsule');
+                const res = await api.getMedicines({
+                    keyword, category, subcategory, stockStatus, expiryStatus, sortBy, page, limit
+                });
+
+                const meds = res?.data || [];
+                const totalItems = res?.totalItems || 0;
+                const totalPages = res?.totalPages || 1;
+
+                document.getElementById('pagination-info').textContent = 
+                    `Showing ${meds.length ? (page-1)*limit + 1 : 0}–${Math.min(page*limit, totalItems)} of ${totalItems} products`;
+
+                renderPagination('pagination-controls-box', totalPages, currentPage, 'changePage');
+
+                if (meds.length === 0) {
+                    showEmptyState(tbody, 'No products found matching filters', 'bi-search');
                     return;
                 }
-                tbody.innerHTML = medicines.map((m, i) => `
+
+                tbody.innerHTML = meds.map(m => `
                     <tr>
-                        <td style="color:#94a3b8;font-size:12px">${i+1}</td>
                         <td>
                             <div class="med-name">${m.medicineName}</div>
-                            <div class="med-generic">${m.genericName || ''}</div>
-                            ${m.prescriptionRequired ? '<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:10px">Rx</span>' : ''}
+                            <div class="med-generic">${m.genericName || ''} • <span style="font-family:monospace;color:#2563eb">${m.sku}</span></div>
                         </td>
-                        <td><span style="font-size:12px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:6px">${m.categoryName}</span></td>
-                        <td style="font-size:12px;color:#64748b">${m.batchNumber}</td>
-                        <td style="font-weight:600">${fmt.currency(m.price)}</td>
-                        <td><strong>${m.quantity}</strong></td>
-                        <td style="font-size:12px">${fmt.date(m.expiryDate)}</td>
+                        <td>
+                            <div><strong>${m.category}</strong></div>
+                            <div class="subcat-pill">${m.subcategory || 'General'}</div>
+                        </td>
+                        <td>
+                            <div>${m.strength || '—'}</div>
+                            <div style="font-size:11px;color:#64748b">${m.packSize || ''}</div>
+                        </td>
+                        <td>
+                            <div><strong>${m.quantity}</strong> <small style="color:#94a3b8">(Min: ${m.minimumStockLevel})</small></div>
+                        </td>
+                        <td>
+                            <div><strong>${fmt.currency(m.sellingPrice)}</strong></div>
+                            <div style="font-size:11px;color:#94a3b8">Cost: ${fmt.currency(m.purchasePrice)}</div>
+                        </td>
+                        <td>
+                            <div>${fmt.date(m.expiryDate)}</div>
+                            <div>${fmt.expiryBadge(m.expiryStatus)}</div>
+                        </td>
                         <td>${fmt.stockBadge(m.stockStatus)}</td>
-                        <td>${fmt.expiryBadge(m.expiryStatus)}</td>
-                        <td>
-                            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;${m.active ? 'background:#dcfce7;color:#16a34a' : 'background:#f1f5f9;color:#64748b'}">
-                                ${m.active ? 'Active' : 'Inactive'}
-                            </span>
-                        </td>
-                        <td>
-                            <div style="display:flex;gap:6px">
-                                ${isAdmin ? `
-                                <button class="btn-icon" onclick="openEditModal(${m.id})" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn-icon ${m.active ? 'danger' : 'success'}" onclick="confirmToggle(${m.id}, '${m.medicineName}', ${m.active})" title="${m.active ? 'Deactivate' : 'Activate'}">
-                                    <i class="bi bi-${m.active ? 'toggle-on' : 'toggle-off'}"></i>
-                                </button>
-                                ` : ''}
-                                <a href="/pages/inventory.html?medicine=${m.id}" class="btn-icon" title="View Inventory">
-                                    <i class="bi bi-boxes"></i>
-                                </a>
-                            </div>
+                        <td style="text-align:right">
+                            <button class="btn-icon" title="View Details" onclick="viewProductDetails(${m.id})"><i class="bi bi-eye"></i></button>
+                            <button class="btn-icon" title="Adjust Stock" onclick="openStockAdjustModal(${m.id}, '${m.medicineName.replace(/'/g, "\\'")}')"><i class="bi bi-box-seam"></i></button>
+                            <button class="btn-icon" title="Edit" onclick="openEditModal(${m.id})"><i class="bi bi-pencil"></i></button>
+                            <button class="btn-icon text-danger" title="Delete" onclick="confirmDelete(${m.id}, '${m.medicineName.replace(/'/g, "\\'")}')"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>
                 `).join('');
             } catch (err) {
-                toast.show('Failed to load medicines: ' + err.message, 'error');
-                showEmptyState(tbody, 'Failed to load medicines', 'bi-exclamation-circle');
+                toast.show('Failed to load products: ' + err.message, 'error');
+            }
+        }
+
+        function changePage(page) {
+            loadMedicines(page);
+        }
+
+        async function viewProductDetails(id) {
+            try {
+                const res = await api.getMedicineById(id);
+                if (!res?.data) return;
+                const m = res.data;
+
+                document.getElementById('d-name').textContent = m.medicineName;
+                document.getElementById('d-sku').textContent = m.sku;
+                document.getElementById('d-generic').textContent = m.genericName || '—';
+                document.getElementById('d-brand').textContent = m.brandName || '—';
+                document.getElementById('d-category').textContent = `${m.category} > ${m.subcategory}`;
+                document.getElementById('d-pack').textContent = `${m.strength || ''} (${m.packSize || ''})`;
+                document.getElementById('d-stock').textContent = `${m.quantity} units (${m.stockStatus})`;
+                document.getElementById('d-reorder').textContent = `${m.minimumStockLevel} units`;
+                document.getElementById('d-price-p').textContent = fmt.currency(m.purchasePrice);
+                document.getElementById('d-price-s').textContent = fmt.currency(m.sellingPrice);
+                document.getElementById('d-batch').textContent = m.batchNumber;
+                document.getElementById('d-expiry').textContent = `${fmt.date(m.expiryDate)} (${m.expiryStatus})`;
+                document.getElementById('d-supplier').textContent = m.supplier;
+
+                document.getElementById('btn-detail-adjust').onclick = () => { closeModal('product-detail-modal'); openStockAdjustModal(m.id, m.medicineName); };
+                document.getElementById('btn-detail-edit').onclick = () => { closeModal('product-detail-modal'); openEditModal(m.id); };
+
+                openModal('product-detail-modal');
+            } catch (e) {
+                toast.show(e.message, 'error');
             }
         }
 
         function openAddModal() {
-            if (!auth.requireAdmin()) return;
             editingId = null;
-            document.getElementById('modal-title').textContent = 'Add Medicine';
+            document.getElementById('modal-title').textContent = 'Add Product';
             document.getElementById('medicine-form').reset();
-            ['e-name','e-category','e-manufacturer','e-batch','e-price','e-quantity','e-minstock','e-expiry']
-                .forEach(id => { document.getElementById(id).textContent = ''; });
+            document.getElementById('f-category').value = 'Medicines';
+            onModalCategoryChange();
             openModal('medicine-modal');
         }
 
         async function openEditModal(id) {
-            if (!auth.requireAdmin()) return;
             editingId = id;
-            document.getElementById('modal-title').textContent = 'Edit Medicine';
             try {
                 const res = await api.getMedicineById(id);
+                if (!res?.data) return;
                 const m = res.data;
+
+                document.getElementById('modal-title').textContent = 'Edit Product';
                 document.getElementById('f-name').value = m.medicineName;
                 document.getElementById('f-generic').value = m.genericName || '';
-                document.getElementById('f-category').value = m.categoryId;
-                document.getElementById('f-manufacturer').value = m.manufacturer;
-                document.getElementById('f-batch').value = m.batchNumber;
-                document.getElementById('f-price').value = m.price;
+                document.getElementById('f-brand').value = m.brandName || '';
+                document.getElementById('f-sku').value = m.sku || '';
+                document.getElementById('f-category').value = m.category || 'Medicines';
+                onModalCategoryChange();
+                document.getElementById('f-subcategory').value = m.subcategory || '';
+                document.getElementById('f-strength').value = m.strength || '';
+                document.getElementById('f-pack').value = m.packSize || '';
+                document.getElementById('f-batch').value = m.batchNumber || '';
+                document.getElementById('f-supplier').value = m.supplier || 'Sun Pharma Direct';
                 document.getElementById('f-quantity').value = m.quantity;
                 document.getElementById('f-minstock').value = m.minimumStockLevel;
+                document.getElementById('f-price-p').value = m.purchasePrice;
+                document.getElementById('f-price-s').value = m.sellingPrice;
                 document.getElementById('f-expiry').value = m.expiryDate;
-                document.getElementById('f-prescription').checked = m.prescriptionRequired;
-                document.getElementById('f-description').value = m.description || '';
+
                 openModal('medicine-modal');
-            } catch (err) {
-                toast.show('Failed to load medicine: ' + err.message, 'error');
+            } catch (e) {
+                toast.show(e.message, 'error');
             }
         }
 
         async function saveMedicine() {
-            // Basic validation
-            let valid = true;
-            const fields = [
-                { id: 'f-name', eid: 'e-name', label: 'Medicine name' },
-                { id: 'f-category', eid: 'e-category', label: 'Category' },
-                { id: 'f-manufacturer', eid: 'e-manufacturer', label: 'Manufacturer' },
-                { id: 'f-batch', eid: 'e-batch', label: 'Batch number' },
-                { id: 'f-price', eid: 'e-price', label: 'Price' },
-                { id: 'f-quantity', eid: 'e-quantity', label: 'Quantity' },
-                { id: 'f-minstock', eid: 'e-minstock', label: 'Minimum stock' },
-                { id: 'f-expiry', eid: 'e-expiry', label: 'Expiry date' },
-            ];
-            fields.forEach(f => {
-                const el = document.getElementById(f.id);
-                const err = document.getElementById(f.eid);
-                if (!el.value) { err.textContent = f.label + ' is required'; valid = false; el.classList.add('is-invalid'); }
-                else { err.textContent = ''; el.classList.remove('is-invalid'); }
-            });
-            if (!valid) return;
-
             const data = {
-                medicineName: document.getElementById('f-name').value,
-                genericName: document.getElementById('f-generic').value,
-                categoryId: parseInt(document.getElementById('f-category').value),
-                manufacturer: document.getElementById('f-manufacturer').value,
-                batchNumber: document.getElementById('f-batch').value,
-                price: parseFloat(document.getElementById('f-price').value),
-                quantity: parseInt(document.getElementById('f-quantity').value),
-                minimumStockLevel: parseInt(document.getElementById('f-minstock').value),
-                expiryDate: document.getElementById('f-expiry').value,
-                prescriptionRequired: document.getElementById('f-prescription').checked,
-                description: document.getElementById('f-description').value,
+                medicineName: document.getElementById('f-name').value.trim(),
+                genericName: document.getElementById('f-generic').value.trim(),
+                brandName: document.getElementById('f-brand').value.trim(),
+                sku: document.getElementById('f-sku').value.trim(),
+                category: document.getElementById('f-category').value,
+                subcategory: document.getElementById('f-subcategory').value,
+                strength: document.getElementById('f-strength').value.trim(),
+                packSize: document.getElementById('f-pack').value.trim(),
+                batchNumber: document.getElementById('f-batch').value.trim(),
+                supplier: document.getElementById('f-supplier').value,
+                quantity: document.getElementById('f-quantity').value,
+                minimumStockLevel: document.getElementById('f-minstock').value,
+                purchasePrice: document.getElementById('f-price-p').value,
+                sellingPrice: document.getElementById('f-price-s').value,
+                expiryDate: document.getElementById('f-expiry').value
             };
 
-            const btn = document.getElementById('btn-save');
-            btn.disabled = true;
+            if (!data.medicineName || !data.brandName || !data.batchNumber || !data.expiryDate) {
+                toast.show('Please fill in required fields.', 'error');
+                return;
+            }
+
             try {
                 if (editingId) {
                     await api.updateMedicine(editingId, data);
-                    toast.show('Medicine updated successfully!', 'success');
+                    toast.show('Product updated successfully!', 'success');
                 } else {
                     await api.createMedicine(data);
-                    toast.show('Medicine added successfully!', 'success');
+                    toast.show('Product added successfully!', 'success');
                 }
                 closeModal('medicine-modal');
                 loadMedicines();
-            } catch (err) {
-                toast.show(err.message, 'error');
-            } finally {
-                btn.disabled = false;
+            } catch (e) {
+                toast.show(e.message, 'error');
             }
         }
 
-        let confirmCallback = null;
-        function confirmToggle(id, name, currentlyActive) {
-            document.getElementById('confirm-message').textContent =
-                `Are you sure you want to ${currentlyActive ? 'deactivate' : 'activate'} "${name}"?`;
-            document.getElementById('btn-confirm').style.background = currentlyActive ? '#dc2626' : '#16a34a';
-            confirmCallback = async () => {
+        function openStockAdjustModal(id, name) {
+            adjustId = id;
+            document.getElementById('adj-prod-name').textContent = name;
+            document.getElementById('adj-qty').value = '';
+            openModal('stock-adjust-modal');
+        }
+
+        async function confirmStockAdjustment() {
+            const type = document.getElementById('adj-type').value;
+            const amount = parseInt(document.getElementById('adj-qty').value || 0);
+
+            if (!amount || amount <= 0) {
+                toast.show('Enter a valid quantity', 'error');
+                return;
+            }
+
+            const change = type === 'ADD' ? amount : -amount;
+
+            try {
+                await api.adjustStock(adjustId, change);
+                toast.show('Stock level updated!', 'success');
+                closeModal('stock-adjust-modal');
+                loadMedicines();
+            } catch (e) {
+                toast.show(e.message, 'error');
+            }
+        }
+
+        function confirmDelete(id, name) {
+            document.getElementById('confirm-message').textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
+            document.getElementById('btn-confirm').onclick = async () => {
                 try {
-                    await api.toggleMedicineStatus(id);
-                    toast.show(`Medicine ${currentlyActive ? 'deactivated' : 'activated'} successfully!`, 'success');
+                    await api.deleteMedicine(id);
+                    toast.show('Product deleted', 'success');
                     closeModal('confirm-modal');
                     loadMedicines();
-                } catch (err) {
-                    toast.show(err.message, 'error');
+                } catch (e) {
+                    toast.show(e.message, 'error');
                 }
             };
             openModal('confirm-modal');
         }
 
-        document.getElementById('btn-confirm').addEventListener('click', () => {
-            if (confirmCallback) confirmCallback();
-        });
-
-        // Initialize
-        loadCategories().then(() => loadMedicines());
+        // Initial Load
+        onCategoryChange();
     </script>
 </body>
 </html>

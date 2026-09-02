@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expiry Alerts — MEDISTOCK</title>
-    <meta name="description" content="MEDISTOCK medicine expiry monitoring and alerts">
+    <title>Expiry Tracking & Alerts — MEDISTOCK</title>
+    <meta name="description" content="MEDISTOCK Medicine Expiry Monitoring and Expiration Date Tracker">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../css/style.css">
 </head>
@@ -16,52 +16,66 @@
         <div class="page-content">
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">Expiry Alerts</h1>
-                    <p class="page-subtitle">Monitor medicine expiry dates to prevent dispensing expired medications</p>
+                    <h1 class="page-title">Expiry Tracking & Risk Management</h1>
+                    <p class="page-subtitle">Monitor products approaching expiration date within 90 days to prevent quality risk and waste</p>
                 </div>
                 <div style="display:flex;gap:10px">
-                    <button class="btn-secondary-custom" id="btn-show-expiring" onclick="showTab('expiring')" style="border-color:#d97706;color:#d97706">
-                        <i class="bi bi-clock-fill"></i> Expiring Soon
+                    <button class="btn-primary-custom" id="btn-tab-expiring" onclick="switchTab('expiring')" style="background:#d97706">
+                        <i class="bi bi-clock-history"></i> Expiring Soon (<span id="count-expiring">0</span>)
                     </button>
-                    <button class="btn-secondary-custom" id="btn-show-expired" onclick="showTab('expired')">
-                        <i class="bi bi-x-circle-fill"></i> Expired
+                    <button class="btn-secondary-custom" id="btn-tab-expired" onclick="switchTab('expired')">
+                        <i class="bi bi-x-circle-fill" style="color:#dc2626"></i> Expired Products (<span id="count-expired">0</span>)
                     </button>
                 </div>
             </div>
 
             <!-- Expiring Soon Tab -->
             <div id="tab-expiring">
-                <div class="alert-warning-custom" style="margin-bottom:20px" id="expiring-banner" style="display:none">
-                    <i class="bi bi-clock-fill"></i>
-                    <span id="expiring-count-text"></span>
-                </div>
-                <div class="table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr><th>#</th><th>Medicine</th><th>Category</th><th>Batch</th><th>Expiry Date</th><th>Days Left</th><th>Qty</th><th>Status</th></tr>
-                        </thead>
-                        <tbody id="expiring-tbody">
-                            <tr><td colspan="8"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div></div></td></tr>
-                        </tbody>
-                    </table>
+                <div class="card" style="padding:0;overflow:hidden">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Product / SKU</th>
+                                    <th>Category & Subcategory</th>
+                                    <th>Batch Number</th>
+                                    <th>Expiry Date</th>
+                                    <th>Days Remaining</th>
+                                    <th>Current Stock</th>
+                                    <th>Supplier</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expiring-tbody">
+                                <tr><td colspan="8"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- Expired Tab -->
             <div id="tab-expired" style="display:none">
-                <div class="alert-danger-custom" style="margin-bottom:20px" id="expired-banner">
-                    <i class="bi bi-x-circle-fill"></i>
-                    <span id="expired-count-text"></span>
-                </div>
-                <div class="table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr><th>#</th><th>Medicine</th><th>Category</th><th>Batch</th><th>Expiry Date</th><th>Days Overdue</th><th>Qty</th><th>Status</th></tr>
-                        </thead>
-                        <tbody id="expired-tbody">
-                            <tr><td colspan="8"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div></div></td></tr>
-                        </tbody>
-                    </table>
+                <div class="card" style="padding:0;overflow:hidden">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Product / SKU</th>
+                                    <th>Category & Subcategory</th>
+                                    <th>Batch Number</th>
+                                    <th>Expiry Date</th>
+                                    <th>Days Overdue</th>
+                                    <th>Quarantined Units</th>
+                                    <th>Supplier</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expired-tbody">
+                                <tr><td colspan="8"><div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -72,94 +86,113 @@
     <script>
         if (!initLayout('Expiry Alerts')) {}
 
-        function showTab(tab) {
-            const isExpiring = tab === 'expiring';
-            document.getElementById('tab-expiring').style.display = isExpiring ? '' : 'none';
-            document.getElementById('tab-expired').style.display = isExpiring ? 'none' : '';
-            document.getElementById('btn-show-expiring').style.borderColor = isExpiring ? '#d97706' : '';
-            document.getElementById('btn-show-expiring').style.color = isExpiring ? '#d97706' : '';
-            document.getElementById('btn-show-expired').style.borderColor = !isExpiring ? '#dc2626' : '';
-            document.getElementById('btn-show-expired').style.color = !isExpiring ? '#dc2626' : '';
+        let currentTab = 'expiring';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const btnExpiring = document.getElementById('btn-tab-expiring');
+            const btnExpired = document.getElementById('btn-tab-expired');
+            const tabExpiring = document.getElementById('tab-expiring');
+            const tabExpired = document.getElementById('tab-expired');
+
+            if (tab === 'expiring') {
+                btnExpiring.className = 'btn-primary-custom';
+                btnExpiring.style.background = '#d97706';
+                btnExpired.className = 'btn-secondary-custom';
+                btnExpired.style.background = '';
+                tabExpiring.style.display = 'block';
+                tabExpired.style.display = 'none';
+            } else {
+                btnExpired.className = 'btn-primary-custom';
+                btnExpired.style.background = '#dc2626';
+                btnExpiring.className = 'btn-secondary-custom';
+                btnExpiring.style.background = '';
+                tabExpired.style.display = 'block';
+                tabExpiring.style.display = 'none';
+            }
         }
 
-        function daysFromNow(dateStr) {
-            const expiry = new Date(dateStr);
-            const now = new Date();
-            now.setHours(0,0,0,0);
-            expiry.setHours(0,0,0,0);
-            return Math.floor((expiry - now) / (1000 * 60 * 60 * 24));
-        }
-
-        async function loadExpiringSoon() {
-            const tbody = document.getElementById('expiring-tbody');
+        async function loadExpiryData() {
             try {
-                const res = await api.getExpiringSoonMedicines();
-                const medicines = res?.data || [];
-                document.getElementById('expiring-count-text').textContent =
-                    `${medicines.length} medicine${medicines.length !== 1 ? 's' : ''} will expire within 30 days. Please take action before dispensing.`;
-                if (medicines.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-check-circle-fill" style="color:#16a34a"></i><h5>No medicines expiring soon</h5><p>All medicines have more than 30 days until expiry.</p></div></td></tr>`;
-                    return;
+                const [expiringRes, expiredRes] = await Promise.all([
+                    api.getExpiringSoonMedicines(),
+                    api.getExpiredMedicines()
+                ]);
+
+                const expiring = expiringRes?.data || [];
+                const expired = expiredRes?.data || [];
+
+                document.getElementById('count-expiring').textContent = expiring.length;
+                document.getElementById('count-expired').textContent = expired.length;
+
+                const expTbody = document.getElementById('expiring-tbody');
+                if (expiring.length === 0) {
+                    showEmptyState(expTbody, 'No products expiring within 90 days!', 'bi-shield-check');
+                } else {
+                    const now = new Date();
+                    now.setHours(0,0,0,0);
+
+                    expTbody.innerHTML = expiring.map(m => {
+                        const exp = new Date(m.expiryDate);
+                        const daysLeft = Math.max(0, Math.ceil((exp - now)/(1000*60*60*24)));
+                        return `
+                            <tr>
+                                <td>
+                                    <div class="med-name">${m.medicineName}</div>
+                                    <div class="med-generic">${m.brandName || ''} • <span style="font-family:monospace;color:#2563eb">${m.sku}</span></div>
+                                </td>
+                                <td>
+                                    <div><strong>${m.category}</strong></div>
+                                    <div class="subcat-pill">${m.subcategory || 'General'}</div>
+                                </td>
+                                <td><span style="font-family:monospace">${m.batchNumber}</span></td>
+                                <td><strong>${fmt.date(m.expiryDate)}</strong></td>
+                                <td><span class="badge-status" style="background:#fef3c7;color:#92400e;font-weight:700">${daysLeft} days left</span></td>
+                                <td>${m.quantity} units</td>
+                                <td>${m.supplier}</td>
+                                <td>${fmt.expiryBadge(m.expiryStatus)}</td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
-                tbody.innerHTML = medicines.map((m, i) => {
-                    const days = daysFromNow(m.expiryDate);
-                    return `
-                    <tr>
-                        <td style="color:#94a3b8;font-size:12px">${i+1}</td>
-                        <td><div class="med-name">${m.medicineName}</div><div class="med-generic">${m.genericName || ''}</div></td>
-                        <td><span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:6px">${m.categoryName}</span></td>
-                        <td style="font-size:12px;color:#64748b">${m.batchNumber}</td>
-                        <td style="font-weight:600">${fmt.date(m.expiryDate)}</td>
-                        <td>
-                            <span style="font-size:14px;font-weight:700;color:${days <= 7 ? '#dc2626' : '#d97706'}">
-                                ${days} day${days !== 1 ? 's' : ''}
-                            </span>
-                        </td>
-                        <td>${m.quantity}</td>
-                        <td>${fmt.expiryBadge(m.expiryStatus)}</td>
-                    </tr>
-                    `;
-                }).join('');
+
+                const expdTbody = document.getElementById('expired-tbody');
+                if (expired.length === 0) {
+                    showEmptyState(expdTbody, 'No expired products found in stock!', 'bi-shield-check');
+                } else {
+                    const now = new Date();
+                    now.setHours(0,0,0,0);
+
+                    expdTbody.innerHTML = expired.map(m => {
+                        const exp = new Date(m.expiryDate);
+                        const daysOverdue = Math.abs(Math.floor((now - exp)/(1000*60*60*24)));
+                        return `
+                            <tr>
+                                <td>
+                                    <div class="med-name">${m.medicineName}</div>
+                                    <div class="med-generic">${m.brandName || ''} • <span style="font-family:monospace;color:#2563eb">${m.sku}</span></div>
+                                </td>
+                                <td>
+                                    <div><strong>${m.category}</strong></div>
+                                    <div class="subcat-pill">${m.subcategory || 'General'}</div>
+                                </td>
+                                <td><span style="font-family:monospace">${m.batchNumber}</span></td>
+                                <td><strong style="color:#dc2626">${fmt.date(m.expiryDate)}</strong></td>
+                                <td><span class="badge-status" style="background:#fee2e2;color:#991b1b;font-weight:700">${daysOverdue} days ago</span></td>
+                                <td><strong>${m.quantity} units</strong></td>
+                                <td>${m.supplier}</td>
+                                <td>${fmt.expiryBadge(m.expiryStatus)}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
             } catch (err) {
                 toast.show('Failed to load expiry data: ' + err.message, 'error');
             }
         }
 
-        async function loadExpired() {
-            const tbody = document.getElementById('expired-tbody');
-            try {
-                const res = await api.getExpiredMedicines();
-                const medicines = res?.data || [];
-                document.getElementById('expired-count-text').textContent =
-                    medicines.length === 0
-                        ? 'No expired medicines found.'
-                        : `⚠ ALERT: ${medicines.length} medicine${medicines.length !== 1 ? 's have' : ' has'} expired and must NOT be dispensed!`;
-                if (medicines.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-check-circle-fill" style="color:#16a34a"></i><h5>No expired medicines</h5></div></td></tr>`;
-                    return;
-                }
-                tbody.innerHTML = medicines.map((m, i) => {
-                    const daysOverdue = -daysFromNow(m.expiryDate);
-                    return `
-                    <tr>
-                        <td style="color:#94a3b8;font-size:12px">${i+1}</td>
-                        <td><div class="med-name">${m.medicineName}</div><div class="med-generic">${m.genericName || ''}</div></td>
-                        <td><span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:6px">${m.categoryName}</span></td>
-                        <td style="font-size:12px;color:#64748b">${m.batchNumber}</td>
-                        <td style="font-weight:600;color:#dc2626">${fmt.date(m.expiryDate)}</td>
-                        <td><span style="font-size:14px;font-weight:700;color:#dc2626">${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} overdue</span></td>
-                        <td>${m.quantity}</td>
-                        <td>${fmt.expiryBadge(m.expiryStatus)}</td>
-                    </tr>
-                    `;
-                }).join('');
-            } catch (err) {
-                toast.show('Failed to load expired data: ' + err.message, 'error');
-            }
-        }
-
-        loadExpiringSoon();
-        loadExpired();
+        loadExpiryData();
     </script>
 </body>
 </html>
