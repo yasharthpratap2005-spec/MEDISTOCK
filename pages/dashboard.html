@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executive Dashboard — MEDISTOCK</title>
-    <meta name="description" content="MEDISTOCK Executive Dashboard - Pharmacy inventory overview and analytics">
+    <title>Dashboard — MEDISTOCK</title>
+    <meta name="description" content="MEDISTOCK Executive & Operational Dashboard">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../css/style.css">
 </head>
@@ -13,150 +13,35 @@
     <div id="topnav-container"></div>
 
     <div class="main-content">
-        <div class="page-content">
-            <!-- Header -->
-            <div class="page-header">
-                <div>
-                    <h1 class="page-title">Executive Overview</h1>
-                    <p class="page-subtitle" id="dash-date">Real-time inventory telemetry & health statistics</p>
+        <div class="page-content" id="dashboard-view-container">
+            <div class="empty-state"><div class="spinner" style="margin:40px auto"></div><p>Loading Dashboard...</p></div>
+        </div>
+    </div>
+
+    <!-- Quick Stock Adjust Modal for Staff Dashboard -->
+    <div class="modal-overlay" id="stock-adjust-modal">
+        <div class="modal-box" style="max-width:440px">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Stock Adjustment</h5>
+                <button class="modal-close" onclick="closeModal('stock-adjust-modal')"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="adj-prod-name" style="font-weight:600;margin:0 0 16px;color:#0f172a"></p>
+                <div class="form-group">
+                    <label class="form-label">Direction</label>
+                    <select class="form-control-custom" id="adj-type">
+                        <option value="ADD">➕ Stock In (Receive Supply)</option>
+                        <option value="SUB">➖ Stock Out (Dispense / Issue)</option>
+                    </select>
                 </div>
-                <div style="display:flex;gap:10px">
-                    <button class="btn-secondary-custom" onclick="loadDashboard()">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh Metrics
-                    </button>
-                    <a href="medicines.html" class="btn-primary-custom" style="text-decoration:none">
-                        <i class="bi bi-boxes"></i> Open Catalogue
-                    </a>
+                <div class="form-group">
+                    <label class="form-label">Quantity Units</label>
+                    <input type="number" class="form-control-custom" id="adj-qty" placeholder="e.g. 20" min="1" required>
                 </div>
             </div>
-
-            <!-- KPI Cards Row -->
-            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:16px; margin-bottom:24px">
-                <div class="stat-card primary">
-                    <div class="stat-icon"><i class="bi bi-capsule"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-medicines">—</div>
-                        <div class="stat-label">Total Products</div>
-                    </div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-icon"><i class="bi bi-boxes"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-stock">—</div>
-                        <div class="stat-label">Total Stock Units</div>
-                    </div>
-                </div>
-                <div class="stat-card info">
-                    <div class="stat-icon"><i class="bi bi-currency-rupee"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-value">—</div>
-                        <div class="stat-label">Total Inventory Value</div>
-                    </div>
-                </div>
-                <div class="stat-card warning">
-                    <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-lowstock">—</div>
-                        <div class="stat-label">Low Stock Items</div>
-                    </div>
-                </div>
-                <div class="stat-card danger">
-                    <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-outofstock">—</div>
-                        <div class="stat-label">Out of Stock</div>
-                    </div>
-                </div>
-                <div class="stat-card danger" style="border-left-color:#f59e0b">
-                    <div class="stat-icon" style="background:#fef3c7;color:#d97706"><i class="bi bi-calendar-x-fill"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="stat-expiring">—</div>
-                        <div class="stat-label">Expiring Soon</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts & Category Distribution Row -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px">
-                <!-- Category Inventory Value Breakdown -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="bi bi-pie-chart-fill" style="color:#2563eb"></i>
-                            Inventory Value by Category
-                        </div>
-                    </div>
-                    <div id="category-bars-container" style="display:flex;flex-direction:column;gap:14px;padding:8px 0">
-                        <div class="empty-state"><div class="spinner"></div></div>
-                    </div>
-                </div>
-
-                <!-- Stock Health Status Overview -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="bi bi-shield-check" style="color:#16a34a"></i>
-                            Stock Health & Distribution
-                        </div>
-                    </div>
-                    <div id="stock-health-container" style="padding:12px 0">
-                        <div class="empty-state"><div class="spinner"></div></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tables Row: Low Stock Alerts + Expiring Alerts -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
-                <!-- Critical Low Stock Alerts -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="bi bi-exclamation-triangle-fill" style="color:#d97706"></i>
-                            Critical Low Stock Alerts
-                        </div>
-                        <a href="low-stock.html" style="font-size:12.5px;color:#2563eb;font-weight:600;text-decoration:none">View All →</a>
-                    </div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Quantity</th>
-                                    <th>Reorder Level</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="low-stock-tbody">
-                                <tr><td colspan="4"><div class="empty-state"><p>Loading alerts...</p></div></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Expiring Soon Alerts -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="bi bi-clock-history" style="color:#dc2626"></i>
-                            Products Approaching Expiry
-                        </div>
-                        <a href="expiry.html" style="font-size:12.5px;color:#2563eb;font-weight:600;text-decoration:none">View All →</a>
-                    </div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Expiry Date</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="expiry-tbody">
-                                <tr><td colspan="3"><div class="empty-state"><p>Loading expiry alerts...</p></div></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-custom" onclick="closeModal('stock-adjust-modal')">Cancel</button>
+                <button class="btn-primary-custom" onclick="confirmStockAdjustment()">Post Adjustment</button>
             </div>
         </div>
     </div>
@@ -164,12 +49,15 @@
     <script src="../js/api.js"></script>
     <script src="../js/common.js"></script>
     <script>
-        if (!initLayout('Executive Dashboard')) {}
+        if (!initLayout('Dashboard')) {}
 
-        document.getElementById('dash-date').textContent =
-            'Live metrics for ' + new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        const isAdmin = auth.isAdmin();
+        let adjustId = null;
 
         async function loadDashboard() {
+            const container = document.getElementById('dashboard-view-container');
+            const dateStr = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
             try {
                 const [summaryRes, lowStockRes, expiryRes] = await Promise.all([
                     api.getDashboardSummary(),
@@ -177,114 +65,378 @@
                     api.getDashboardExpiring()
                 ]);
 
-                if (summaryRes?.data) {
-                    const s = summaryRes.data;
-                    document.getElementById('stat-medicines').textContent = fmt.number(s.totalMedicines);
-                    document.getElementById('stat-stock').textContent = fmt.number(s.totalStockUnits);
-                    document.getElementById('stat-value').textContent = fmt.currency(s.totalInventoryValue);
-                    document.getElementById('stat-lowstock').textContent = fmt.number(s.lowStockCount);
-                    document.getElementById('stat-outofstock').textContent = fmt.number(s.outOfStockCount);
-                    document.getElementById('stat-expiring').textContent = fmt.number(s.expiringSoonCount);
-
-                    // Category Breakdown Progress Bars
-                    const catContainer = document.getElementById('category-bars-container');
-                    const cats = s.categoriesBreakdown || {};
-                    const totalVal = s.totalInventoryValue || 1;
-
-                    let catHtml = '';
-                    Object.keys(cats).forEach(catName => {
-                        const item = cats[catName];
-                        const pct = Math.min(100, Math.round((item.value / totalVal) * 100));
-                        catHtml += `
-                            <div>
-                                <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px">
-                                    <span>${catName} <small style="color:#64748b;font-weight:400">(${item.count} items)</small></span>
-                                    <span>${fmt.currency(item.value)}</span>
-                                </div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-fill" style="width:${pct}%;background:#2563eb"></div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    catContainer.innerHTML = catHtml || '<p style="color:#94a3b8">No category data</p>';
-
-                    // Stock Health Distribution Bar
-                    const healthContainer = document.getElementById('stock-health-container');
-                    const totalMeds = s.totalMedicines || 1;
-                    const inStockCount = totalMeds - s.lowStockCount - s.outOfStockCount;
-                    const inStockPct = Math.round((inStockCount / totalMeds) * 100);
-                    const lowStockPct = Math.round((s.lowStockCount / totalMeds) * 100);
-                    const outStockPct = Math.round((s.outOfStockCount / totalMeds) * 100);
-
-                    healthContainer.innerHTML = `
-                        <div style="margin-bottom:16px">
-                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
-                                <span><strong>In Stock Ratio</strong> (${inStockCount}/${totalMeds})</span>
-                                <span style="font-weight:700;color:#16a34a">${inStockPct}% Health</span>
-                            </div>
-                            <div style="height:12px;background:#e2e8f0;border-radius:999px;display:flex;overflow:hidden">
-                                <div style="width:${inStockPct}%;background:#16a34a" title="In Stock: ${inStockCount}"></div>
-                                <div style="width:${lowStockPct}%;background:#d97706" title="Low Stock: ${s.lowStockCount}"></div>
-                                <div style="width:${outStockPct}%;background:#dc2626" title="Out of Stock: ${s.outOfStockCount}"></div>
-                            </div>
-                        </div>
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;margin-top:16px">
-                            <div style="background:#dcfce7;padding:10px;border-radius:8px">
-                                <div style="font-size:18px;font-weight:700;color:#16a34a">${inStockCount}</div>
-                                <div style="font-size:11px;color:#15803d;font-weight:600">Optimal Stock</div>
-                            </div>
-                            <div style="background:#fef3c7;padding:10px;border-radius:8px">
-                                <div style="font-size:18px;font-weight:700;color:#d97706">${s.lowStockCount}</div>
-                                <div style="font-size:11px;color:#b45309;font-weight:600">Reorder Required</div>
-                            </div>
-                            <div style="background:#fee2e2;padding:10px;border-radius:8px">
-                                <div style="font-size:18px;font-weight:700;color:#dc2626">${s.outOfStockCount}</div>
-                                <div style="font-size:11px;color:#b91c1c;font-weight:600">Depleted</div>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                // Low Stock Table
-                const lowTbody = document.getElementById('low-stock-tbody');
+                const s = summaryRes?.data || {};
                 const lowMeds = lowStockRes?.data || [];
-                if (lowMeds.length === 0) {
-                    showEmptyState(lowTbody, 'All products have adequate stock', 'bi-check-circle-fill');
-                } else {
-                    lowTbody.innerHTML = lowMeds.slice(0, 7).map(m => `
-                        <tr>
-                            <td>
-                                <div class="med-name">${m.medicineName}</div>
-                                <div class="med-generic">${m.brandName || ''} • <span style="font-family:monospace">${m.sku}</span></div>
-                            </td>
-                            <td><strong>${m.quantity} units</strong></td>
-                            <td>${m.minimumStockLevel} units</td>
-                            <td>${fmt.stockBadge(m.stockStatus)}</td>
-                        </tr>
-                    `).join('');
-                }
-
-                // Expiry Table
-                const expTbody = document.getElementById('expiry-tbody');
                 const expMeds = expiryRes?.data || [];
-                if (expMeds.length === 0) {
-                    showEmptyState(expTbody, 'No products expiring soon', 'bi-check-circle-fill');
+
+                if (isAdmin) {
+                    renderAdminDashboard(container, s, lowMeds, expMeds, dateStr);
                 } else {
-                    expTbody.innerHTML = expMeds.slice(0, 7).map(m => `
-                        <tr>
-                            <td>
-                                <div class="med-name">${m.medicineName}</div>
-                                <div class="med-generic">${m.category} > ${m.subcategory || ''}</div>
-                            </td>
-                            <td><strong>${fmt.date(m.expiryDate)}</strong></td>
-                            <td>${fmt.expiryBadge(m.expiryStatus)}</td>
-                        </tr>
-                    `).join('');
+                    renderStaffDashboard(container, s, lowMeds, expMeds, dateStr);
                 }
 
             } catch (err) {
                 toast.show('Failed to load dashboard: ' + err.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // 1. ADMIN DASHBOARD (Executive & Business)
+        // ==========================================
+        function renderAdminDashboard(container, s, lowMeds, expMeds, dateStr) {
+            const exactValueStr = fmt.currency(s.totalInventoryValue || 0);
+            const compactValueStr = fmt.compactCurrency(s.totalInventoryValue || 0);
+            const compactUnitsStr = fmt.compactNumber(s.totalStockUnits || 0);
+
+            container.innerHTML = `
+                <!-- Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Executive Control Center</h1>
+                        <p class="page-subtitle">${dateStr} • Administrative Inventory Telemetry</p>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                        <button class="btn-secondary-custom" onclick="loadDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                        <a href="medicines.html" class="btn-primary-custom" style="text-decoration:none"><i class="bi bi-boxes"></i> Full Catalogue</a>
+                    </div>
+                </div>
+
+                <!-- KPI Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card" title="Total Registered Products: ${fmt.number(s.totalMedicines)}">
+                        <div class="kpi-icon primary"><i class="bi bi-capsule"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value">${fmt.number(s.totalMedicines)}</div>
+                            <div class="kpi-label">Total Products</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card" title="Exact Stock Units: ${fmt.number(s.totalStockUnits)}">
+                        <div class="kpi-icon success"><i class="bi bi-boxes"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value">${compactUnitsStr}</div>
+                            <div class="kpi-label">Total Stock Units</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card" title="Exact Inventory Value: ${exactValueStr}">
+                        <div class="kpi-icon info"><i class="bi bi-currency-rupee"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value">${compactValueStr}</div>
+                            <div class="kpi-label">Catalogue Value</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card" title="Products requiring reorder">
+                        <div class="kpi-icon warning"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value" style="color:#d97706">${fmt.number(s.lowStockCount)}</div>
+                            <div class="kpi-label">Low Stock Items</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card" title="Products completely out of stock">
+                        <div class="kpi-icon danger"><i class="bi bi-x-circle-fill"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value" style="color:#dc2626">${fmt.number(s.outOfStockCount)}</div>
+                            <div class="kpi-label">Out of Stock</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card" title="Products expiring within 90 days">
+                        <div class="kpi-icon warning" style="background:#fef3c7;color:#d97706"><i class="bi bi-calendar-x-fill"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value" style="color:#d97706">${fmt.number(s.expiringSoonCount)}</div>
+                            <div class="kpi-label">Expiring Soon</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Health Breakdown -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px">
+                    <!-- Inventory Value by Category -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="bi bi-pie-chart-fill" style="color:#2563eb"></i> Inventory Value by Category</div>
+                        </div>
+                        <div id="category-bars-container" style="display:flex;flex-direction:column;gap:12px;padding:6px 0"></div>
+                    </div>
+
+                    <!-- Stock Health Distribution -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="bi bi-shield-check" style="color:#16a34a"></i> Stock Ratio & Health</div>
+                        </div>
+                        <div id="stock-health-container" style="padding:10px 0"></div>
+                    </div>
+                </div>
+
+                <!-- Alert Tables -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="bi bi-exclamation-triangle-fill" style="color:#d97706"></i> Reorder Threshold Alerts</div>
+                            <a href="low-stock.html" style="font-size:12px;color:#2563eb;font-weight:600;text-decoration:none">View All →</a>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Product</th><th>Qty</th><th>Min</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${lowMeds.length === 0 ? '<tr><td colspan="4"><div class="empty-state"><p>All stock levels optimal</p></div></td></tr>' : 
+                                        lowMeds.slice(0, 6).map(m => `
+                                            <tr>
+                                                <td><div class="med-name truncate-text" title="${m.medicineName}">${m.medicineName}</div><div class="med-generic">${m.sku}</div></td>
+                                                <td><strong>${m.quantity}</strong></td>
+                                                <td>${m.minimumStockLevel}</td>
+                                                <td>${fmt.stockBadge(m.stockStatus)}</td>
+                                            </tr>
+                                        `).join('')
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="bi bi-clock-history" style="color:#dc2626"></i> Expiry Alerts (<90 Days)</div>
+                            <a href="expiry.html" style="font-size:12px;color:#2563eb;font-weight:600;text-decoration:none">View All →</a>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Product</th><th>Expiry</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${expMeds.length === 0 ? '<tr><td colspan="3"><div class="empty-state"><p>No expiring products</p></div></td></tr>' : 
+                                        expMeds.slice(0, 6).map(m => `
+                                            <tr>
+                                                <td><div class="med-name truncate-text" title="${m.medicineName}">${m.medicineName}</div><div class="med-generic">${m.category}</div></td>
+                                                <td><strong>${fmt.date(m.expiryDate)}</strong></td>
+                                                <td>${fmt.expiryBadge(m.expiryStatus)}</td>
+                                            </tr>
+                                        `).join('')
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            renderCategoryBars(s.categoriesBreakdown, s.totalInventoryValue);
+            renderStockHealth(s);
+        }
+
+        // ==========================================
+        // 2. STAFF DASHBOARD (Operational & Action)
+        // ==========================================
+        function renderStaffDashboard(container, s, lowMeds, expMeds, dateStr) {
+            container.innerHTML = `
+                <!-- Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Staff Operations Desk</h1>
+                        <p class="page-subtitle">${dateStr} • Day-to-day dispensing & stock updates</p>
+                    </div>
+                    <button class="btn-secondary-custom" onclick="loadDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                </div>
+
+                <!-- Operational Search Widget -->
+                <div class="card" style="margin-bottom:20px;padding:20px;background:linear-gradient(135deg, #1e3a5f, #0f172a);color:#ffffff">
+                    <h3 style="font-size:16px;font-weight:700;margin:0 0 10px;color:#ffffff"><i class="bi bi-search"></i> Quick Product & Stock Search</h3>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <div class="search-box" style="flex:1;min-width:240px;background:#ffffff">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" id="staff-search-input" placeholder="Search product name, generic, brand or SKU..." onkeydown="if(event.key==='Enter') navigateToSearch()">
+                        </div>
+                        <button class="btn-primary-custom" onclick="navigateToSearch()" style="white-space:nowrap"><i class="bi bi-arrow-right"></i> Search Catalogue</button>
+                    </div>
+                </div>
+
+                <!-- Operational KPIs -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon primary"><i class="bi bi-check2-circle"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value">${fmt.number(s.totalMedicines - s.outOfStockCount)}</div>
+                            <div class="kpi-label">Products Available</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon warning"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value" style="color:#d97706">${fmt.number(s.lowStockCount)}</div>
+                            <div class="kpi-label">Low Stock Items</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon danger"><i class="bi bi-x-circle-fill"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value" style="color:#dc2626">${fmt.number(s.outOfStockCount)}</div>
+                            <div class="kpi-label">Out of Stock</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon warning" style="background:#fef3c7;color:#d97706"><i class="bi bi-clock-history"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-value" style="color:#d97706">${fmt.number(s.expiringSoonCount)}</div>
+                            <div class="kpi-label">Expiring Soon</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operational Tables: Low Stock Action List + Expiring Items -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+                    <!-- Low Stock Operational Action Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="bi bi-exclamation-triangle-fill" style="color:#d97706"></i> Stock Replenishment Action</div>
+                            <a href="low-stock.html" style="font-size:12px;color:#2563eb;font-weight:600;text-decoration:none">View All →</a>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Product</th><th>Qty</th><th>Status</th><th style="text-align:right">Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${lowMeds.length === 0 ? '<tr><td colspan="4"><div class="empty-state"><p>All products adequately stocked</p></div></td></tr>' : 
+                                        lowMeds.slice(0, 6).map(m => `
+                                            <tr>
+                                                <td><div class="med-name truncate-text" title="${m.medicineName}">${m.medicineName}</div><div class="med-generic">${m.sku}</div></td>
+                                                <td><strong>${m.quantity}</strong></td>
+                                                <td>${fmt.stockBadge(m.stockStatus)}</td>
+                                                <td style="text-align:right">
+                                                    <button class="btn-primary-custom" style="padding:3px 8px;font-size:11px" onclick="openQuickAdjust(${m.id}, '${m.medicineName.replace(/'/g, "\\'")}')">
+                                                        <i class="bi bi-box-seam"></i> Restock
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `).join('')
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Expiring Items Watchlist -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="bi bi-calendar-x-fill" style="color:#dc2626"></i> Expiring Soon Watchlist</div>
+                            <a href="expiry.html" style="font-size:12px;color:#2563eb;font-weight:600;text-decoration:none">View All →</a>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Product</th><th>Expiry Date</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${expMeds.length === 0 ? '<tr><td colspan="3"><div class="empty-state"><p>No products expiring soon</p></div></td></tr>' : 
+                                        expMeds.slice(0, 6).map(m => `
+                                            <tr>
+                                                <td><div class="med-name truncate-text" title="${m.medicineName}">${m.medicineName}</div><div class="med-generic">${m.category}</div></td>
+                                                <td><strong>${fmt.date(m.expiryDate)}</strong></td>
+                                                <td>${fmt.expiryBadge(m.expiryStatus)}</td>
+                                            </tr>
+                                        `).join('')
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCategoryBars(cats, totalVal) {
+            const catContainer = document.getElementById('category-bars-container');
+            if (!catContainer) return;
+
+            let catHtml = '';
+            Object.keys(cats || {}).forEach(catName => {
+                const item = cats[catName];
+                const pct = Math.min(100, Math.round((item.value / (totalVal || 1)) * 100));
+                catHtml += `
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-bottom:3px">
+                            <span>${catName} <small style="color:#64748b;font-weight:400">(${item.count} items)</small></span>
+                            <span>${fmt.compactCurrency(item.value)}</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width:${pct}%;background:#2563eb"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            catContainer.innerHTML = catHtml || '<p style="color:#94a3b8">No category breakdown data</p>';
+        }
+
+        function renderStockHealth(s) {
+            const healthContainer = document.getElementById('stock-health-container');
+            if (!healthContainer) return;
+
+            const totalMeds = s.totalMedicines || 1;
+            const inStockCount = totalMeds - s.lowStockCount - s.outOfStockCount;
+            const inStockPct = Math.round((inStockCount / totalMeds) * 100);
+            const lowStockPct = Math.round((s.lowStockCount / totalMeds) * 100);
+            const outStockPct = Math.round((s.outOfStockCount / totalMeds) * 100);
+
+            healthContainer.innerHTML = `
+                <div style="margin-bottom:14px">
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+                        <span><strong>Stock Ratio</strong> (${inStockCount}/${totalMeds})</span>
+                        <span style="font-weight:700;color:#16a34a">${inStockPct}% Optimal</span>
+                    </div>
+                    <div style="height:10px;background:#e2e8f0;border-radius:999px;display:flex;overflow:hidden">
+                        <div style="width:${inStockPct}%;background:#16a34a" title="In Stock: ${inStockCount}"></div>
+                        <div style="width:${lowStockPct}%;background:#d97706" title="Low Stock: ${s.lowStockCount}"></div>
+                        <div style="width:${outStockPct}%;background:#dc2626" title="Out of Stock: ${s.outOfStockCount}"></div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;margin-top:14px">
+                    <div style="background:#dcfce7;padding:8px;border-radius:8px">
+                        <div style="font-size:16px;font-weight:700;color:#16a34a">${inStockCount}</div>
+                        <div style="font-size:11px;color:#15803d;font-weight:600">Optimal</div>
+                    </div>
+                    <div style="background:#fef3c7;padding:8px;border-radius:8px">
+                        <div style="font-size:16px;font-weight:700;color:#d97706">${s.lowStockCount}</div>
+                        <div style="font-size:11px;color:#b45309;font-weight:600">Low Stock</div>
+                    </div>
+                    <div style="background:#fee2e2;padding:8px;border-radius:8px">
+                        <div style="font-size:16px;font-weight:700;color:#dc2626">${s.outOfStockCount}</div>
+                        <div style="font-size:11px;color:#b91c1c;font-weight:600">Out of Stock</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function navigateToSearch() {
+            const val = document.getElementById('staff-search-input')?.value || '';
+            window.location.href = `medicines.html?search=${encodeURIComponent(val)}`;
+        }
+
+        function openQuickAdjust(id, name) {
+            adjustId = id;
+            document.getElementById('adj-prod-name').textContent = name;
+            document.getElementById('adj-qty').value = '50';
+            openModal('stock-adjust-modal');
+        }
+
+        async function confirmStockAdjustment() {
+            const type = document.getElementById('adj-type').value;
+            const amount = parseInt(document.getElementById('adj-qty').value || 0);
+
+            if (!amount || amount <= 0) {
+                toast.show('Enter a valid quantity', 'error');
+                return;
+            }
+
+            const change = type === 'ADD' ? amount : -amount;
+
+            try {
+                await api.adjustStock(adjustId, change);
+                toast.show('Stock updated successfully!', 'success');
+                closeModal('stock-adjust-modal');
+                loadDashboard();
+            } catch (e) {
+                toast.show(e.message, 'error');
             }
         }
 

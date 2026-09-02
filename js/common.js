@@ -1,9 +1,9 @@
 /**
- * MEDISTOCK - Common Utilities
- * Shared UI helpers, toast, modal, formatting
+ * MEDISTOCK - Common Utilities & Security Architecture
+ * Shared UI helpers, role guards, compact number formatting, navigation
  */
 
-// ===== AUTH HELPERS =====
+// ===== AUTH & PERMISSION GUARDS =====
 const auth = {
     getUser() {
         try { return JSON.parse(localStorage.getItem('medistock_user')); } catch { return null; }
@@ -27,7 +27,11 @@ const auth = {
     },
     requireAdmin() {
         if (!this.isAdmin()) {
-            toast.show('Access denied. Admin role required.', 'error');
+            toast.show('Access Denied. Administrative privileges required.', 'error');
+            setTimeout(() => {
+                const inPages = window.location.pathname.includes('/pages/');
+                window.location.href = inPages ? 'dashboard.html' : './pages/dashboard.html';
+            }, 1000);
             return false;
         }
         return true;
@@ -77,10 +81,26 @@ const loading = {
     }
 };
 
-// ===== FORMATTING =====
+// ===== SMART NUMBER & CURRENCY FORMATTING =====
 const fmt = {
     currency(val) {
-        return '₹' + parseFloat(val || 0).toFixed(2);
+        return '₹' + parseFloat(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    compactCurrency(val) {
+        const num = parseFloat(val || 0);
+        if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)} Cr`;
+        if (num >= 100000) return `₹${(num / 100000).toFixed(2)} L`;
+        if (num >= 1000) return `₹${(num / 1000).toFixed(1)} K`;
+        return `₹${num.toFixed(2)}`;
+    },
+    number(val) {
+        return parseInt(val || 0).toLocaleString('en-IN');
+    },
+    compactNumber(val) {
+        const num = parseInt(val || 0);
+        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+        if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+        return `${num}`;
     },
     date(dateStr) {
         if (!dateStr) return '-';
@@ -115,9 +135,6 @@ const fmt = {
             'CANCELLED': '<span class="badge-status badge-cancelled">Cancelled</span>',
         };
         return map[status] || status;
-    },
-    number(val) {
-        return parseInt(val || 0).toLocaleString('en-IN');
     }
 };
 
@@ -131,7 +148,7 @@ function setupSidebar() {
     const roleEl = document.getElementById('topnav-role');
     const avatarEl = document.getElementById('topnav-avatar');
     if (nameEl) nameEl.textContent = user.name;
-    if (roleEl) roleEl.textContent = user.role;
+    if (roleEl) roleEl.textContent = user.role === 'ADMIN' ? 'Administrator' : 'Staff Pharmacist';
     if (avatarEl) avatarEl.textContent = user.name?.charAt(0)?.toUpperCase() || 'U';
 
     // Badge counts
@@ -166,12 +183,14 @@ async function updateSidebarBadges() {
         const lowBadge = document.getElementById('badge-lowstock');
         const expBadge = document.getElementById('badge-expiry');
         if (lowBadge) {
-            lowBadge.textContent = summary.lowStockCount + summary.outOfStockCount;
-            lowBadge.style.display = (summary.lowStockCount + summary.outOfStockCount) > 0 ? 'inline-flex' : 'none';
+            const count = (summary.lowStockCount || 0) + (summary.outOfStockCount || 0);
+            lowBadge.textContent = count;
+            lowBadge.style.display = count > 0 ? 'inline-flex' : 'none';
         }
         if (expBadge) {
-            expBadge.textContent = summary.expiringSoonCount + summary.expiredCount;
-            expBadge.style.display = (summary.expiringSoonCount + summary.expiredCount) > 0 ? 'inline-flex' : 'none';
+            const count = (summary.expiringSoonCount || 0) + (summary.expiredCount || 0);
+            expBadge.textContent = count;
+            expBadge.style.display = count > 0 ? 'inline-flex' : 'none';
         }
     } catch (e) { /* ignore */ }
 }
@@ -234,7 +253,7 @@ function showEmptyState(tableBody, message = 'No records found', icon = 'bi-inbo
 }
 
 // ===== DEBOUNCE =====
-function debounce(fn, delay = 350) {
+function debounce(fn, delay = 300) {
     let timer;
     return (...args) => {
         clearTimeout(timer);
@@ -242,49 +261,56 @@ function debounce(fn, delay = 350) {
     };
 }
 
-// ===== SIDEBAR HTML TEMPLATE =====
+// ===== ROLE-BASED SIDEBAR NAVIGATION TEMPLATE =====
 function getSidebarHtml() {
     const isAdmin = auth.isAdmin();
     const prefix = window.location.pathname.includes('/pages/') ? '' : 'pages/';
+
+    let navItems = `
+        <div class="sidebar-section-label">Main</div>
+        <a href="${prefix}dashboard.html" class="sidebar-item" data-page="dashboard">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+        <a href="${prefix}medicines.html" class="sidebar-item" data-page="medicines">
+            <i class="bi bi-capsule"></i> Product Catalogue
+        </a>
+        <div class="sidebar-section-label">Stock Operations</div>
+        <a href="${prefix}inventory.html" class="sidebar-item" data-page="inventory">
+            <i class="bi bi-boxes"></i> Inventory Movements
+        </a>
+        <a href="${prefix}low-stock.html" class="sidebar-item" data-page="low-stock">
+            <i class="bi bi-exclamation-triangle-fill"></i> Low Stock Alerts
+            <span class="sidebar-badge" id="badge-lowstock" style="display:none"></span>
+        </a>
+        <a href="${prefix}expiry.html" class="sidebar-item" data-page="expiry">
+            <i class="bi bi-calendar-x-fill"></i> Expiry Risk
+            <span class="sidebar-badge" id="badge-expiry" style="display:none"></span>
+        </a>
+    `;
+
+    if (isAdmin) {
+        navItems += `
+            <div class="sidebar-section-label">Administration</div>
+            <a href="${prefix}categories.html" class="sidebar-item" data-page="categories">
+                <i class="bi bi-tags-fill"></i> Categories Taxonomy
+            </a>
+            <a href="${prefix}users.html" class="sidebar-item" data-page="users">
+                <i class="bi bi-people-fill"></i> Staff & User Accounts
+            </a>
+        `;
+    }
+
     return `
     <aside class="sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-brand-icon"><i class="bi bi-capsule-pill"></i></div>
             <div class="sidebar-brand-text">
                 <span class="sidebar-brand-name">MEDISTOCK</span>
-                <span class="sidebar-brand-sub">Pharmacy Management</span>
+                <span class="sidebar-brand-sub">${isAdmin ? 'Admin Console' : 'Staff Operations'}</span>
             </div>
         </div>
         <nav class="sidebar-nav">
-            <div class="sidebar-section-label">Main</div>
-            <a href="${prefix}dashboard.html" class="sidebar-item" data-page="dashboard">
-                <i class="bi bi-grid-1x2-fill"></i> Dashboard
-            </a>
-            <a href="${prefix}medicines.html" class="sidebar-item" data-page="medicines">
-                <i class="bi bi-capsule"></i> Medicines
-            </a>
-            ${isAdmin ? `<a href="${prefix}categories.html" class="sidebar-item" data-page="categories">
-                <i class="bi bi-tags-fill"></i> Categories
-            </a>` : ''}
-            <div class="sidebar-section-label">Inventory</div>
-            <a href="${prefix}inventory.html" class="sidebar-item" data-page="inventory">
-                <i class="bi bi-boxes"></i> Inventory
-            </a>
-            <a href="${prefix}low-stock.html" class="sidebar-item" data-page="low-stock">
-                <i class="bi bi-exclamation-triangle-fill"></i> Low Stock
-                <span class="sidebar-badge" id="badge-lowstock" style="display:none"></span>
-            </a>
-            <a href="${prefix}expiry.html" class="sidebar-item" data-page="expiry">
-                <i class="bi bi-calendar-x-fill"></i> Expiry Alerts
-                <span class="sidebar-badge" id="badge-expiry" style="display:none"></span>
-            </a>
-            <div class="sidebar-section-label">Operations</div>
-            <a href="${prefix}orders.html" class="sidebar-item" data-page="orders">
-                <i class="bi bi-cart-fill"></i> Orders
-            </a>
-            ${isAdmin ? `<a href="${prefix}users.html" class="sidebar-item" data-page="users">
-                <i class="bi bi-people-fill"></i> Users
-            </a>` : ''}
+            ${navItems}
         </nav>
         <div class="sidebar-footer">
             <button class="sidebar-item" id="logout-btn" style="color:#f87171">
@@ -296,14 +322,19 @@ function getSidebarHtml() {
 }
 
 function getTopnavHtml(title) {
+    const user = auth.getUser();
+    const roleBadge = user?.role === 'ADMIN' 
+        ? '<span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;text-transform:uppercase">ADMIN</span>' 
+        : '<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;text-transform:uppercase">STAFF</span>';
+
     return `
     <nav class="topnav">
         <button id="menu-toggle" class="btn-icon" style="border:none;display:none;" aria-label="Menu">
             <i class="bi bi-list"></i>
         </button>
-        <div class="topnav-title">${title}</div>
+        <div class="topnav-title">${title} ${roleBadge}</div>
         <div class="topnav-user">
-            <div class="topnav-user-avatar" id="topnav-avatar">A</div>
+            <div class="topnav-user-avatar" id="topnav-avatar">U</div>
             <div class="topnav-user-info">
                 <div class="topnav-user-name" id="topnav-name">User</div>
                 <div class="topnav-user-role" id="topnav-role">Role</div>
@@ -313,7 +344,6 @@ function getTopnavHtml(title) {
     `;
 }
 
-// Initialize common elements
 function initLayout(title) {
     if (!auth.requireLogin()) return false;
     const sidebarContainer = document.getElementById('sidebar-container');

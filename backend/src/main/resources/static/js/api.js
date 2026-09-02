@@ -2762,6 +2762,9 @@ const api = {
     },
 
     deleteMedicine(id) {
+        if (!auth.isAdmin()) {
+            return Promise.reject(new Error('Permission denied: Administrative role required to delete products.'));
+        }
         let products = this._getProducts();
         products = products.filter(p => p.id != id);
         this._saveProducts(products);

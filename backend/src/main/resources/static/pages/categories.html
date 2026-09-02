@@ -34,7 +34,19 @@
     <script src="../js/api.js"></script>
     <script src="../js/common.js"></script>
     <script>
-        if (!initLayout('Categories')) {}
+        if (!initLayout('Categories Taxonomy')) {}
+        if (!auth.requireAdmin()) {
+            document.getElementById('categories-grid').innerHTML = `
+                <div class="access-denied-box">
+                    <div class="access-denied-icon"><i class="bi bi-shield-lock-fill"></i></div>
+                    <h3 style="margin:0 0 8px;font-size:20px;color:#0f172a">Access Denied</h3>
+                    <p style="color:#64748b;font-size:14px;margin:0 0 20px">Administrative role required to view Category Taxonomy settings.</p>
+                    <a href="dashboard.html" class="btn-primary-custom" style="text-decoration:none">Return to Dashboard</a>
+                </div>
+            `;
+        } else {
+            loadCategories();
+        }
 
         const taxonomy = {
             'Medicines': {
