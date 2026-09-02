@@ -1,9 +1,9 @@
 /**
- * MEDISTOCK - Common Utilities & Security Architecture
- * Shared UI helpers, role guards, compact number formatting, navigation
+ * MEDISTOCK - Common Architecture & Security Engine
+ * Unified Design Tokens, Role-Based Navigation, Route Guards, Number Formatting
  */
 
-// ===== AUTH & PERMISSION GUARDS =====
+// ===== AUTH & ROLE SECURITY =====
 const auth = {
     getUser() {
         try { return JSON.parse(localStorage.getItem('medistock_user')); } catch { return null; }
@@ -25,13 +25,21 @@ const auth = {
         }
         return true;
     },
-    requireAdmin() {
+    guardAdminRoute() {
         if (!this.isAdmin()) {
-            toast.show('Access Denied. Administrative privileges required.', 'error');
-            setTimeout(() => {
-                const inPages = window.location.pathname.includes('/pages/');
-                window.location.href = inPages ? 'dashboard.html' : './pages/dashboard.html';
-            }, 1000);
+            const container = document.querySelector('.page-content') || document.querySelector('.main-content');
+            if (container) {
+                container.innerHTML = `
+                    <div class="access-denied-box">
+                        <div class="access-denied-icon"><i class="bi bi-shield-lock-fill"></i></div>
+                        <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#0f172a">ACCESS DENIED</h2>
+                        <p style="color:#64748b;font-size:14px;margin:0 0 20px">You don't have permission to access this section.</p>
+                        <a href="dashboard.html" class="btn-primary-custom" style="text-decoration:none">
+                            <i class="bi bi-arrow-left"></i> Return to Dashboard
+                        </a>
+                    </div>
+                `;
+            }
             return false;
         }
         return true;
@@ -59,25 +67,8 @@ const toast = {
         setTimeout(() => toastEl.classList.add('show'), 10);
         setTimeout(() => {
             toastEl.classList.remove('show');
-            setTimeout(() => toastEl.remove(), 400);
+            setTimeout(() => toastEl.remove(), 350);
         }, duration);
-    }
-};
-
-// ===== LOADING OVERLAY =====
-const loading = {
-    _overlay: null,
-    show() {
-        if (!this._overlay) {
-            this._overlay = document.createElement('div');
-            this._overlay.className = 'loading-overlay';
-            this._overlay.innerHTML = '<div class="spinner"></div>';
-            document.body.appendChild(this._overlay);
-        }
-        this._overlay.style.display = 'flex';
-    },
-    hide() {
-        if (this._overlay) this._overlay.style.display = 'none';
     }
 };
 
@@ -138,7 +129,7 @@ const fmt = {
     }
 };
 
-// ===== SIDEBAR SETUP =====
+// ===== SIDEBAR & TOPBAR INITIALIZATION =====
 function setupSidebar() {
     const user = auth.getUser();
     if (!user) return;
@@ -148,7 +139,7 @@ function setupSidebar() {
     const roleEl = document.getElementById('topnav-role');
     const avatarEl = document.getElementById('topnav-avatar');
     if (nameEl) nameEl.textContent = user.name;
-    if (roleEl) roleEl.textContent = user.role === 'ADMIN' ? 'Administrator' : 'Staff Pharmacist';
+    if (roleEl) roleEl.textContent = user.role === 'ADMIN' ? 'Administrator' : 'Staff User';
     if (avatarEl) avatarEl.textContent = user.name?.charAt(0)?.toUpperCase() || 'U';
 
     // Badge counts
@@ -193,6 +184,113 @@ async function updateSidebarBadges() {
             expBadge.style.display = count > 0 ? 'inline-flex' : 'none';
         }
     } catch (e) { /* ignore */ }
+}
+
+// ===== ROLE-BASED SIDEBAR HTML GENERATOR =====
+function getSidebarHtml() {
+    const isAdmin = auth.isAdmin();
+    const prefix = window.location.pathname.includes('/pages/') ? '' : 'pages/';
+
+    let navHtml = `
+        <div class="sidebar-section-label">Operations</div>
+        <a href="${prefix}dashboard.html" class="sidebar-item" data-page="dashboard">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+        <a href="${prefix}medicines.html" class="sidebar-item" data-page="medicines">
+            <i class="bi bi-capsule"></i> Medicines
+        </a>
+        <a href="${prefix}inventory.html" class="sidebar-item" data-page="inventory">
+            <i class="bi bi-boxes"></i> Inventory
+        </a>
+        <a href="${prefix}low-stock.html" class="sidebar-item" data-page="low-stock">
+            <i class="bi bi-exclamation-triangle-fill"></i> Low Stock
+            <span class="sidebar-badge" id="badge-lowstock" style="display:none"></span>
+        </a>
+        <a href="${prefix}expiry.html" class="sidebar-item" data-page="expiry">
+            <i class="bi bi-calendar-x-fill"></i> Expiry Alerts
+            <span class="sidebar-badge" id="badge-expiry" style="display:none"></span>
+        </a>
+        <a href="${prefix}orders.html" class="sidebar-item" data-page="orders">
+            <i class="bi bi-cart-fill"></i> Orders
+        </a>
+    `;
+
+    if (isAdmin) {
+        navHtml += `
+            <div class="sidebar-section-label">Administration</div>
+            <a href="${prefix}suppliers.html" class="sidebar-item" data-page="suppliers">
+                <i class="bi bi-truck"></i> Suppliers
+            </a>
+            <a href="${prefix}reports.html" class="sidebar-item" data-page="reports">
+                <i class="bi bi-graph-up-arrow"></i> Reports
+            </a>
+            <a href="${prefix}users.html" class="sidebar-item" data-page="users">
+                <i class="bi bi-people-fill"></i> Staff Management
+            </a>
+            <a href="${prefix}activity.html" class="sidebar-item" data-page="activity">
+                <i class="bi bi-clock-history"></i> Activity
+            </a>
+            <a href="${prefix}settings.html" class="sidebar-item" data-page="settings">
+                <i class="bi bi-gear-fill"></i> Settings
+            </a>
+        `;
+    }
+
+    return `
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon"><i class="bi bi-capsule-pill"></i></div>
+            <div class="sidebar-brand-text">
+                <span class="sidebar-brand-name">MEDISTOCK</span>
+                <span class="sidebar-brand-sub">${isAdmin ? 'Administrative Portal' : 'Staff Operations'}</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            ${navHtml}
+        </nav>
+        <div class="sidebar-footer">
+            <button class="sidebar-item" id="logout-btn" style="color:#f87171">
+                <i class="bi bi-box-arrow-left"></i> Logout
+            </button>
+        </div>
+    </aside>
+    `;
+}
+
+function getTopnavHtml(title) {
+    const user = auth.getUser();
+    const roleBadge = user?.role === 'ADMIN' 
+        ? '<span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:0.5px">ADMIN</span>' 
+        : '<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:0.5px">STAFF</span>';
+
+    return `
+    <nav class="topnav">
+        <button id="menu-toggle" class="btn-icon" style="border:none;display:none;" aria-label="Menu">
+            <i class="bi bi-list" style="font-size:18px"></i>
+        </button>
+        <div class="topnav-title">
+            <span>${title}</span>
+            ${roleBadge}
+        </div>
+        <div class="topnav-user">
+            <div class="topnav-user-avatar" id="topnav-avatar">U</div>
+            <div class="topnav-user-info">
+                <div class="topnav-user-name" id="topnav-name">User</div>
+                <div class="topnav-user-role" id="topnav-role">Role</div>
+            </div>
+        </div>
+    </nav>
+    `;
+}
+
+function initLayout(title) {
+    if (!auth.requireLogin()) return false;
+    const sidebarContainer = document.getElementById('sidebar-container');
+    const topnavContainer = document.getElementById('topnav-container');
+    if (sidebarContainer) sidebarContainer.innerHTML = getSidebarHtml();
+    if (topnavContainer) topnavContainer.innerHTML = getTopnavHtml(title);
+    setupSidebar();
+    return true;
 }
 
 // ===== PAGINATION HELPER =====
@@ -240,16 +338,15 @@ function closeModal(id) {
     document.getElementById(id)?.classList.remove('active');
 }
 
-// Close modal on overlay click
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal-overlay')) {
         e.target.classList.remove('active');
     }
 });
 
-// ===== TABLE EMPTY STATE =====
+// ===== EMPTY STATE HELPER =====
 function showEmptyState(tableBody, message = 'No records found', icon = 'bi-inbox') {
-    tableBody.innerHTML = `<tr><td colspan="100"><div class="empty-state"><i class="bi ${icon}"></i><h5>${message}</h5><p>No data available to display.</p></div></td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="100"><div class="empty-state"><i class="bi ${icon}"></i><h5>${message}</h5><p>No records match your active criteria.</p></div></td></tr>`;
 }
 
 // ===== DEBOUNCE =====
@@ -259,97 +356,4 @@ function debounce(fn, delay = 300) {
         clearTimeout(timer);
         timer = setTimeout(() => fn(...args), delay);
     };
-}
-
-// ===== ROLE-BASED SIDEBAR NAVIGATION TEMPLATE =====
-function getSidebarHtml() {
-    const isAdmin = auth.isAdmin();
-    const prefix = window.location.pathname.includes('/pages/') ? '' : 'pages/';
-
-    let navItems = `
-        <div class="sidebar-section-label">Main</div>
-        <a href="${prefix}dashboard.html" class="sidebar-item" data-page="dashboard">
-            <i class="bi bi-grid-1x2-fill"></i> Dashboard
-        </a>
-        <a href="${prefix}medicines.html" class="sidebar-item" data-page="medicines">
-            <i class="bi bi-capsule"></i> Product Catalogue
-        </a>
-        <div class="sidebar-section-label">Stock Operations</div>
-        <a href="${prefix}inventory.html" class="sidebar-item" data-page="inventory">
-            <i class="bi bi-boxes"></i> Inventory Movements
-        </a>
-        <a href="${prefix}low-stock.html" class="sidebar-item" data-page="low-stock">
-            <i class="bi bi-exclamation-triangle-fill"></i> Low Stock Alerts
-            <span class="sidebar-badge" id="badge-lowstock" style="display:none"></span>
-        </a>
-        <a href="${prefix}expiry.html" class="sidebar-item" data-page="expiry">
-            <i class="bi bi-calendar-x-fill"></i> Expiry Risk
-            <span class="sidebar-badge" id="badge-expiry" style="display:none"></span>
-        </a>
-    `;
-
-    if (isAdmin) {
-        navItems += `
-            <div class="sidebar-section-label">Administration</div>
-            <a href="${prefix}categories.html" class="sidebar-item" data-page="categories">
-                <i class="bi bi-tags-fill"></i> Categories Taxonomy
-            </a>
-            <a href="${prefix}users.html" class="sidebar-item" data-page="users">
-                <i class="bi bi-people-fill"></i> Staff & User Accounts
-            </a>
-        `;
-    }
-
-    return `
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-brand-icon"><i class="bi bi-capsule-pill"></i></div>
-            <div class="sidebar-brand-text">
-                <span class="sidebar-brand-name">MEDISTOCK</span>
-                <span class="sidebar-brand-sub">${isAdmin ? 'Admin Console' : 'Staff Operations'}</span>
-            </div>
-        </div>
-        <nav class="sidebar-nav">
-            ${navItems}
-        </nav>
-        <div class="sidebar-footer">
-            <button class="sidebar-item" id="logout-btn" style="color:#f87171">
-                <i class="bi bi-box-arrow-left"></i> Logout
-            </button>
-        </div>
-    </aside>
-    `;
-}
-
-function getTopnavHtml(title) {
-    const user = auth.getUser();
-    const roleBadge = user?.role === 'ADMIN' 
-        ? '<span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;text-transform:uppercase">ADMIN</span>' 
-        : '<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;text-transform:uppercase">STAFF</span>';
-
-    return `
-    <nav class="topnav">
-        <button id="menu-toggle" class="btn-icon" style="border:none;display:none;" aria-label="Menu">
-            <i class="bi bi-list"></i>
-        </button>
-        <div class="topnav-title">${title} ${roleBadge}</div>
-        <div class="topnav-user">
-            <div class="topnav-user-avatar" id="topnav-avatar">U</div>
-            <div class="topnav-user-info">
-                <div class="topnav-user-name" id="topnav-name">User</div>
-                <div class="topnav-user-role" id="topnav-role">Role</div>
-            </div>
-        </div>
-    </nav>
-    `;
-}
-
-function initLayout(title) {
-    if (!auth.requireLogin()) return false;
-    const sidebarContainer = document.getElementById('sidebar-container');
-    const topnavContainer = document.getElementById('topnav-container');
-    if (sidebarContainer) sidebarContainer.innerHTML = getSidebarHtml();
-    if (topnavContainer) topnavContainer.innerHTML = getTopnavHtml(title);
-    setupSidebar();
-    return true;
 }

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suppliers — MEDISTOCK</title>
+    <meta name="description" content="MEDISTOCK Supplier and Vendor Management">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="sidebar-container"></div>
+    <div id="topnav-container"></div>
+
+    <div class="main-content">
+        <div class="page-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Suppliers & Vendor Directory</h1>
+                    <div class="page-subtitle">Manage pharmaceutical distributor partnerships, delivery terms, and active contracts</div>
+                </div>
+                <button class="btn-primary-custom" onclick="openModal('add-supplier-modal')">
+                    <i class="bi bi-plus-lg"></i> Register Supplier
+                </button>
+            </div>
+
+            <div class="card" style="padding:0;overflow:hidden">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Distributor / Company</th>
+                                <th>Primary Portfolio</th>
+                                <th>Lead Time</th>
+                                <th>Contact Person</th>
+                                <th>Phone & Email</th>
+                                <th>Active Items</th>
+                                <th>Status</th>
+                                <th style="text-align:right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliers-tbody">
+                            <tr>
+                                <td>
+                                    <div class="med-name">Sun Pharma Direct</div>
+                                    <div class="med-generic">Vendor ID: SUP-001</div>
+                                </td>
+                                <td><span class="subcat-pill">Antibiotics & Cardiovascular</span></td>
+                                <td>24-48 Hours</td>
+                                <td>Rajesh Sharma</td>
+                                <td>+91 98201 44521<br><small style="color:#64748b">orders@sunpharma.in</small></td>
+                                <td><strong>28 products</strong></td>
+                                <td><span class="badge-status badge-valid">Active Vendor</span></td>
+                                <td style="text-align:right">
+                                    <button class="btn-icon" title="View Catalog" onclick="toast.show('Filtered by Sun Pharma Direct', 'info')"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="med-name">Cipla Lifesciences</div>
+                                    <div class="med-generic">Vendor ID: SUP-002</div>
+                                </td>
+                                <td><span class="subcat-pill">Respiratory & Fever</span></td>
+                                <td>24-36 Hours</td>
+                                <td>Anita Deshmukh</td>
+                                <td>+91 98112 88349<br><small style="color:#64748b">supply@cipla.com</small></td>
+                                <td><strong>24 products</strong></td>
+                                <td><span class="badge-status badge-valid">Active Vendor</span></td>
+                                <td style="text-align:right">
+                                    <button class="btn-icon" title="View Catalog" onclick="toast.show('Filtered by Cipla Lifesciences', 'info')"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="med-name">Apollo Medical Wholesalers</div>
+                                    <div class="med-generic">Vendor ID: SUP-003</div>
+                                </td>
+                                <td><span class="subcat-pill">First Aid & Medical Supplies</span></td>
+                                <td>12-24 Hours</td>
+                                <td>Vikas Khanna</td>
+                                <td>+91 99304 11290<br><small style="color:#64748b">dist@apollomed.org</small></td>
+                                <td><strong>20 products</strong></td>
+                                <td><span class="badge-status badge-valid">Active Vendor</span></td>
+                                <td style="text-align:right">
+                                    <button class="btn-icon" title="View Catalog" onclick="toast.show('Filtered by Apollo Medical', 'info')"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="med-name">Dr. Reddy's Logistics</div>
+                                    <div class="med-generic">Vendor ID: SUP-004</div>
+                                </td>
+                                <td><span class="subcat-pill">Gastrointestinal & Pain</span></td>
+                                <td>48 Hours</td>
+                                <td>Suresh Nair</td>
+                                <td>+91 97401 55670<br><small style="color:#64748b">orders@drreddys.com</small></td>
+                                <td><strong>18 products</strong></td>
+                                <td><span class="badge-status badge-valid">Active Vendor</span></td>
+                                <td style="text-align:right">
+                                    <button class="btn-icon" title="View Catalog" onclick="toast.show('Filtered by Dr. Reddy Logistics', 'info')"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="med-name">GSK Healthcare India</div>
+                                    <div class="med-generic">Vendor ID: SUP-005</div>
+                                </td>
+                                <td><span class="subcat-pill">Fever, Cold & Cough</span></td>
+                                <td>24-48 Hours</td>
+                                <td>Kavita Sen</td>
+                                <td>+91 98450 77123<br><small style="color:#64748b">sales@gskindia.com</small></td>
+                                <td><strong>14 products</strong></td>
+                                <td><span class="badge-status badge-valid">Active Vendor</span></td>
+                                <td style="text-align:right">
+                                    <button class="btn-icon" title="View Catalog" onclick="toast.show('Filtered by GSK Healthcare', 'info')"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="med-name">Abbott Healthcare</div>
+                                    <div class="med-generic">Vendor ID: SUP-006</div>
+                                </td>
+                                <td><span class="subcat-pill">Diabetes & Cardiology</span></td>
+                                <td>36 Hours</td>
+                                <td>Pooja Verma</td>
+                                <td>+91 99100 33456<br><small style="color:#64748b">dist@abbott.co.in</small></td>
+                                <td><strong>12 products</strong></td>
+                                <td><span class="badge-status badge-valid">Active Vendor</span></td>
+                                <td style="text-align:right">
+                                    <button class="btn-icon" title="View Catalog" onclick="toast.show('Filtered by Abbott Healthcare', 'info')"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="med-name">Mankind Pharma Supply</div>
+                                    <div class="med-generic">Vendor ID: SUP-007</div>
+                                </td>
+                                <td><span class="subcat-pill">Dermatology & Pain Relief</span></td>
+                                <td>24 Hours</td>
+                                <td>Amitabh Roy</td>
+                                <td>+91 98711 22987<br><small style="color:#64748b">orders@mankind.in</small></td>
+                                <td><strong>10 products</strong></td>
+                                <td><span class="badge-status badge-valid">Active Vendor</span></td>
+                                <td style="text-align:right">
+                                    <button class="btn-icon" title="View Catalog" onclick="toast.show('Filtered by Mankind Pharma', 'info')"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Supplier Modal -->
+    <div class="modal-overlay" id="add-supplier-modal">
+        <div class="modal-box" style="max-width:520px">
+            <div class="modal-header">
+                <h5 class="modal-title">Register New Supplier</h5>
+                <button class="modal-close" onclick="closeModal('add-supplier-modal')"><i class="bi bi-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label required">Company / Distributor Name</label>
+                    <input type="text" class="form-control-custom" id="sup-name" placeholder="e.g., Torrent Pharmaceuticals">
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">Contact Person</label>
+                    <input type="text" class="form-control-custom" id="sup-contact" placeholder="e.g., Manoj Saxena">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="form-group">
+                        <label class="form-label required">Phone</label>
+                        <input type="text" class="form-control-custom" id="sup-phone" placeholder="+91 98000 00000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">Email</label>
+                        <input type="email" class="form-control-custom" id="sup-email" placeholder="orders@dist.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Primary Product Domain</label>
+                    <input type="text" class="form-control-custom" id="sup-domain" placeholder="e.g., Cardiovascular & Oncology">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary-custom" onclick="closeModal('add-supplier-modal')">Cancel</button>
+                <button class="btn-primary-custom" onclick="saveSupplier()">Register Vendor</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/common.js"></script>
+    <script>
+        if (!initLayout('Suppliers')) {}
+        if (!auth.guardAdminRoute()) {}
+
+        function saveSupplier() {
+            const name = document.getElementById('sup-name').value.trim();
+            if (!name) {
+                toast.show('Please enter supplier company name', 'error');
+                return;
+            }
+            toast.show(`Supplier "${name}" registered successfully`, 'success');
+            closeModal('add-supplier-modal');
+        }
+    </script>
+</body>
+</html>
